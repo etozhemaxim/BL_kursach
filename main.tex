@@ -8,6 +8,63 @@
 \usepackage{geometry}
 \geometry{top=2cm, bottom=2cm, left=2cm, right=2cm}
 \usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{indentfirst}
+\usepackage{placeins}
+\usepackage{lipsum}
+\usepackage{longtable}
+\usepackage{csquotes}
+\usepackage[style=gost-numeric,sorting=none]{biblatex}
+\usepackage{enumitem}
+\usepackage{caption}
+
+\captionsetup[table]{position=top, singlelinecheck=false, justification=raggedleft}
+
+
+
+\addbibresource{references.bib}
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+    {\normalfont\huge\bfseries}
+    {\chaptertitlename\ \thechapter}
+    {20pt}
+    {\Huge}
+\usepackage{booktabs}
+\usepackage{makecell}
+\graphicspath{{Image/}}
+
+\geometry{
+    a4paper,
+    total={170mm,257mm},
+    left=20mm,
+    top=20mm,
+}
+
+\newcommand{\specialcell}[2][c]{%
+    \begin{tabular}[#1]{@{}c@{}}#2\end{tabular}%
+}
+
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}
+  {\chapter*{\bibname}}
+  {\section*{\centering СПИСОК ЛИТЕРАТУРЫ}}
+  {}{}
+\patchcmd{\thebibliography}
+  {\addcontentsline{toc}{chapter}{\bibname}}
+  {\addcontentsline{toc}{section}{СПИСОК ЛИТЕРАТУРЫ}}
+  {}{}
+
+
+\usepackage{setspace}
+\onehalfspacing
+
 
 % Для подчеркивания текста, аналогичного .underline в Word
 \newcommand{\und}[1]{\uline{#1}}
@@ -52,14 +109,14 @@
     \textbf{\textit{НА ТЕМУ:}}
 
     \vspace{0.5cm}
-    \textbf{\textit{\und{«Определение рациональных параметров метательных устройств на сжатом газе»}}}
+    \textbf{\textit{\und{«Баллистическое проектирование артиллерийских орудий»}}}
 
     \vspace{1.5cm}
-    \textbf{Вариант 21}
+    \textbf{Вариант 24}
 
     \vspace{2cm}
     \begin{flushleft}
-        Студент \und{СМ6-52} \hfill \underline{\hspace{5cm}} \hfill \und{Д. М. Брюшков} \\
+        Студент \und{СМ6-72} \hfill \underline{\hspace{5cm}} \hfill \und{М.В. Ерофеев} \\
         \hspace{4.8cm} (Группа) \hspace{2.3cm} (Подпись, дата) \hspace{1.8cm} (И.О.Фамилия) \\[1cm]
         Руководитель курсовой работы \hfill \underline{\hspace{5cm}} \hfill \und{В.А. Федулов} \\
         \hspace{7.5cm} (Подпись, дата) \hspace{1.8cm} (И.О.Фамилия)
@@ -67,7 +124,7 @@
 
     \vfill
     \centering
-    \textit{2024 г.}
+    \textit{2025 г.}
 
     \newpage % Начало второй страницы (Задание)
 
@@ -102,16 +159,16 @@
     \vspace{1cm}
     \begin{flushleft}
         по дисциплине \und{Газовая динамика} \hfill \underline{\hspace{7cm}} \\[0.5cm]
-        Студент группы \und{СМ6-52} \\[0.5cm]
-        \underline{\hspace{12cm}} \und{Брюшков Дмитрий Максимович} \\
+        Студент группы \und{СМ6-72} \\[0.5cm]
+        \underline{\hspace{12cm}} \und{Ерофеев Максим Викторович} \\
         \hspace{5cm} (Фамилия, имя, отчество) \\[0.5cm]
-        Тема курсовой работы \und{Определение рациональных параметров метательных устройств} \\
+        Тема курсовой работы \und{Баллистическое проектирование артиллерийских орудий} \\
         \und{на сжатом газе} \\[0.5cm]
         Направленность КР (учебная, исследовательская, практическая, производственная, др.) \\
         \und{Учебная} \hfill \underline{\hspace{7cm}} \\[0.5cm]
         Источник тематики (кафедра, предприятие, НИР) \und{Кафедра} \hfill \underline{\hspace{5cm}} \\[0.5cm]
         График выполнения работы: 25\% к \und{4} нед., 50\% к \und{8} нед., 75\% к \und{12} нед., 100\% к \und{14} нед. \\[1cm]
-        \textbf{\textit{Задание}} \und{Найдите минимальное начальное давление газа, при котором удается обеспечить скорость метаемо-го тела vpm тела массой m из ствола калибром d. Общая длина тру-бы не должна превышать n калибров. Наибольшая длина камеры не более 1/2 общей длины трубы. Начальная плотность газа не бо-лее $\rho_0$ max. Газ считать холодным (T0 = 300 K), метод лагранжевых координат.} \\[1cm]
+        \textbf{\textit{Задание}} \und{Найти оптимальные параметры ствола и условий заряжания при решении обратной задачи внутренней баллистики. При этом $d = 85$ мм, $q =$ 5 кг, $ v_{\text{pm}} = 950 $ м/с, тип орудия – НР, тип математической модели – квазиодномерная (КМ), критерий оптимальности – $Z_{\text{B1}}$, $p^{\text{max}}_{\text{m}}$ = 390 МПа, $l^{\text{max}}_{\text{m}}$ = 65 ед.d, $v_{\text{pm-50}}$ = 850 м/с, $p_{\text{mz+5}}0 = $ 180 МПа.} \\[1cm]
         \textbf{\textit{Оформление курсовой работы:}} \\[0.5cm]
         Расчетно-пояснительная записка на \underline{\hspace{2cm}} листах формата А4. \\[0.5cm]
         \underline{\hspace{15cm}} \\
@@ -121,10 +178,15 @@
         Дата выдачи задания «\und{13}» \und{сентября} \und{2024} г. \\[2cm]
         \textbf{Руководитель курсовой работы} \hfill \underline{\hspace{5cm}} \hfill \und{В.А. Федулов} \\
         \hspace{8cm} (Подпись, дата) \hspace{2cm} (И.О.Фамилия) \\[1.5cm]
-        \textbf{Студент} \hfill \underline{\hspace{5cm}} \hfill \und{Д. М. Брюшков} \\
+        \textbf{Студент} \hfill \underline{\hspace{5cm}} \hfill \und{М.В. Ерофеев} \\
         \hspace{8cm} (Подпись, дата) \hspace{2cm} (И.О.Фамилия)
     \end{flushleft}
 
 \end{titlepage}
+\tableofcontents
+
+\newpage
+\section*{Введение}
+Данная курсовая работа посвящена нахождению оптимальных параметров артиллерийского орудия путем решения обратной задачи внутреннй баллистики идите нахуй всееееееееееееееееее
 
 \end{document}

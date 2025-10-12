@@ -1,4 +1,4 @@
-\documentclass[14pt, a4paper]{report} % или article, если не нужен увеличенный базовый шрифт
+\documentclass[14pt, a4paper]{extreport} % или article, если не нужен увеличенный базовый шрифт
 \usepackage[utf8]{inputenc}
 \usepackage[T2A]{fontenc}
 \usepackage[russian]{babel}
@@ -24,10 +24,15 @@
 \usepackage[style=gost-numeric,sorting=none]{biblatex}
 \usepackage{enumitem}
 \usepackage{caption}
-
+\usepackage{subfiles}
 \captionsetup[table]{position=top, singlelinecheck=false, justification=raggedleft}
+\usepackage{wrapfig}
+\usepackage{setspace}
+\usepackage{totpages}
+\usepackage{ifthen}
+\usepackage{refcount}
 
-
+\usepackage{tabto}
 
 \addbibresource{references.bib}
 \usepackage{titlesec}
@@ -71,8 +76,9 @@
 
 \begin{document}
 
+\subfile{titul.tex}
 
-
+\newpage
 \tableofcontents
 
 \newpage

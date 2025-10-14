@@ -1,0 +1,52 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram name="Страница — 1" id="P-5p6njiO4LbHPFQki4D">
+    <mxGraphModel dx="714" dy="423" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="WPXos_EvRKvVQUhmrtDo-1" target="WPXos_EvRKvVQUhmrtDo-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-1" value="" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" vertex="1" parent="1">
+          <mxGeometry x="250" y="180" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-2" value="База данных&lt;div&gt;порохов&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="235" y="263" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="WPXos_EvRKvVQUhmrtDo-6" target="WPXos_EvRKvVQUhmrtDo-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-6" value="" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="160.75" width="180" height="118.5" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-7" value="Входные параметры" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="370" y="130.75" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-8" value="Условия заряжания" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="385" y="170" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-13" value="Геометрия&amp;nbsp;&lt;div&gt;ствола&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="385" y="223" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="WPXos_EvRKvVQUhmrtDo-14" target="WPXos_EvRKvVQUhmrtDo-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-14" value="Математическая&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;модель&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;прямой&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;задачи&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="185" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-16" value="" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="750" y="160.75" width="180" height="118.5" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-17" value="Выходные параметры" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="765" y="130.75" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-22" value="Дульная скорость" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="785" y="170" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WPXos_EvRKvVQUhmrtDo-23" value="Максимальное давление" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="785" y="223" width="110" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

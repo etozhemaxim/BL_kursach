@@ -2,6 +2,11 @@ import math
 from math import *
 import itertools
 import numpy as np
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
 
 from baza_powder import powders_db
 
@@ -14,7 +19,7 @@ def classify_powder(powder_name):
     else:  # начинаются с цифры или дроби - пироксилиновый
         return 'pyroxylin'
 
-# Разделяем базу порохов по типам и определяем B_values для каждого пороха
+# Разделяем базу порохов по типам
 pyroxylin_powders = {}
 ballistic_powders = {}
 
@@ -68,10 +73,10 @@ pyroxylin_params = {
 }
 
 # Общие параметры для обоих случаев
-v_pm = 900  # дульная скорость
-d = 0.1524
+v_pm = 950  # дульная скорость
+d = 0.085
 p_ign = 1e6
-q = 54  # масса снаряда, кг 
+q = 5  # масса снаряда, кг 
 phi_1 = 1.02
 omega_ign = 0.01
 S = pi * d**2 / 4
@@ -79,7 +84,7 @@ S = pi * d**2 / 4
 # Диапазоны варьирования (для пушек высокой мощности)
 vardelta_values = list(range(650, 781, 10))  # кг/м³
 eta_rm_values = list(np.arange(0.1, 0.6, 0.1))  # r_m от 0.1 до 0.5
-# B_values больше не варьируем - используем индивидуальные для каждого пороха
+B_values = [4.5, 2.0]  # B для одноканальных и многоканальных порохов
 
 # Максимально возможное значение импульса
 MAX_IMPULSE = 2.71
@@ -124,8 +129,8 @@ def vary_parameters_for_powder_type(params, powder_type_name, powders_db):
     """Варьирование параметров для конкретного типа пороха"""
     results = []
     
-    # Создаем комбинации только с vardelta и r_m, B берем из данных пороха
-    combinations = list(itertools.product(vardelta_values, eta_rm_values))
+    # Создаем комбинации только с vardelta, r_m и B
+    combinations = list(itertools.product(vardelta_values, eta_rm_values, B_values))
     
     print(f"\n{'='*90}")
     print(f"РАСЧЕТ ДЛЯ {powder_type_name.upper()}")
@@ -134,31 +139,29 @@ def vary_parameters_for_powder_type(params, powder_type_name, powders_db):
     print("-" * 90)
     
     valid_combinations = 0
+    exceeded_combinations = 0
     
-    for vardelta, r_m in combinations:
-        # Для каждого пороха в базе рассчитываем с его B_value
-        for powder_name, powder_data in powders_db.items():
-            B = powder_data['B_value']
-            omega, impulse = I_e(vardelta, r_m, B, params)
-            
-            # Пропускаем комбинации с импульсом больше максимального
-            if impulse > MAX_IMPULSE:
-                status = "ПРЕВЫШЕН"
-                print(f"{vardelta:<10} {r_m:<8.1f} {B:<8} {omega:<15.4f} {impulse:<15.4f} {status:<10}")
-                continue
-            
-            results.append({
-                'vardelta': vardelta,
-                'r_m': r_m,
-                'B': B,
-                'omega': omega,
-                'I_e': impulse,
-                'powder_name': powder_name
-            })
-            
-            status = "OK"
+    for vardelta, r_m, B in combinations:
+        omega, impulse = I_e(vardelta, r_m, B, params)
+        
+        # Пропускаем комбинации с импульсом больше максимального
+        if impulse > MAX_IMPULSE:
+            status = "ПРЕВЫШЕН"
             print(f"{vardelta:<10} {r_m:<8.1f} {B:<8} {omega:<15.4f} {impulse:<15.4f} {status:<10}")
-            valid_combinations += 1
+            exceeded_combinations += 1
+            continue
+        
+        results.append({
+            'vardelta': vardelta,
+            'r_m': r_m,
+            'B': B,
+            'omega': omega,
+            'I_e': impulse
+        })
+        
+        status = "OK"
+        print(f"{vardelta:<10} {r_m:<8.1f} {B:<8} {omega:<15.4f} {impulse:<15.4f} {status:<10}")
+        valid_combinations += 1
     
     # Сводка по рассчитанным импульсам
     if results:
@@ -172,7 +175,9 @@ def vary_parameters_for_powder_type(params, powder_type_name, powders_db):
     else:
         print(f"\n⚠️  Нет допустимых комбинаций - все превышают максимальный импульс {MAX_IMPULSE} МПа·с")
     
-    print(f"Всего валидных комбинаций: {valid_combinations}")
+    print(f"Всего комбинаций: {len(combinations)}")
+    print(f"Валидных комбинаций: {valid_combinations}")
+    print(f"Комбинаций с превышением: {exceeded_combinations}")
     return results
 
 def print_detailed_matching_analysis(results, powders_db, powder_type_name):
@@ -196,7 +201,7 @@ def print_detailed_matching_analysis(results, powders_db, powder_type_name):
             
         difference = abs(powder_impulse - avg_impulse)
         difference_percent = (difference / avg_impulse) * 100
-        best_matches.append((powder_name, powder_impulse, difference, difference_percent))
+        best_matches.append((powder_name, powder_impulse, difference, difference_percent, powder_data['B_value'], powder_data['z_e']))
     
     # Сортируем по близости к среднему
     best_matches.sort(key=lambda x: x[2])
@@ -204,9 +209,8 @@ def print_detailed_matching_analysis(results, powders_db, powder_type_name):
     print(f"\n🎯 ТОП-10 самых близких порохов к среднему значению:")
     print(f"{'Марка':<25} {'I_e (МПа·с)':<12} {'Разница':<12} {'%':<8} {'B':<6} {'z_e':<6}")
     print("-" * 75)
-    for i, (name, impulse, diff, diff_percent) in enumerate(best_matches[:10]):
-        powder_data = powders_db[name]
-        print(f"{i+1:2}. {name:<22} {impulse:<12.3f} {diff:<12.3f} {diff_percent:+.1f}% {powder_data['B_value']:<6} {powder_data['z_e']:<6}")
+    for i, (name, impulse, diff, diff_percent, B_val, z_e) in enumerate(best_matches[:10]):
+        print(f"{i+1:2}. {name:<22} {impulse:<12.3f} {diff:<12.3f} {diff_percent:+.1f}% {B_val:<6} {z_e:<6}")
 
 def create_approved_powders_file(results, powders_db, params, powder_type, best_count=10):
     """Создает файл с одобренными порохами для конкретного типа"""
@@ -282,6 +286,33 @@ approved_powders = {{
     
     file_content += "}\n\n"
     
+    # Добавляем информацию о лучших комбинациях параметров
+    file_content += "# ЛУЧШИЕ КОМБИНАЦИИ ПАРАМЕТРОВ:\n"
+    file_content += "#" * 70 + "\n"
+    
+    # Находим лучшие комбинации (ближайшие к среднему)
+    best_combinations = sorted(results, key=lambda x: abs(x['I_e'] - avg_impulse))[:5]
+    
+    for i, combo in enumerate(best_combinations, 1):
+        file_content += f"# Комбинация #{i}: vardelta={combo['vardelta']}, r_m={combo['r_m']:.1f}, B={combo['B']}\n"
+        file_content += f"# Результат: omega={combo['omega']:.4f} кг, I_e={combo['I_e']:.4f} МПа·с\n"
+        
+        # Находим пороха, подходящие для этой комбинации
+        matching_powders = []
+        for powder_name, powder_data in powders_db.items():
+            if powder_data['I_e'] > MAX_IMPULSE:
+                continue
+            if powder_data['B_value'] == combo['B']:  # Только пороха с подходящим B
+                difference = abs(powder_data['I_e'] - combo['I_e'])
+                if difference <= 0.15:
+                    matching_powders.append((powder_name, powder_data['I_e'], difference))
+        
+        if matching_powders:
+            matching_powders.sort(key=lambda x: x[2])
+            matching_str = ', '.join([f'{name}({imp:.3f})' for name, imp, _ in matching_powders[:3]])
+            file_content += f"# Подходящие пороха: {matching_str}\n"
+        file_content += "#" * 70 + "\n"
+    
     # Записываем файл
     with open(filename, 'w', encoding='utf-8') as f:
         f.write(file_content)
@@ -351,3 +382,249 @@ if ballistic_file or pyroxylin_file:
 else:
     print("❌ Файлы не созданы - нет допустимых результатов")
 print(f"{'='*90}")
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+
+def create_scatter_plot(results, powders_db, params, powder_type):
+    """Создает диаграмму рассеяния для сравнения импульсов"""
+    
+    if not results:
+        print(f"Нет данных для визуализации {powder_type}")
+        return
+    
+    # Подготовка данных
+    calculated_impulses = [r['I_e'] for r in results]
+    avg_impulse = np.mean(calculated_impulses)
+    
+    # Создаем DataFrame для порохов
+    powder_data = []
+    for name, data in powders_db.items():
+        if data['I_e'] > 2.71:  # Пропускаем превышающие максимум
+            continue
+        powder_data.append({
+            'name': name,
+            'powder_impulse': data['I_e'],
+            'type': 'ballistic' if classify_powder(name) == 'ballistic' else 'pyroxylin',
+            'B_value': data['B_value'],
+            'z_e': data['z_e']
+        })
+    
+    df_powders = pd.DataFrame(powder_data)
+    
+    # Создаем график
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    
+    # График 1: Сравнение с расчетными значениями
+    ax1.scatter(calculated_impulses, [avg_impulse] * len(calculated_impulses), 
+               alpha=0.6, color='blue', label='Расчетные значения', s=50)
+    
+    colors = {'ballistic': 'red', 'pyroxylin': 'green'}
+    for powder_type_val in ['ballistic', 'pyroxylin']:
+        mask = df_powders['type'] == powder_type_val
+        ax1.scatter(df_powders[mask]['powder_impulse'], 
+                   [avg_impulse] * len(df_powders[mask]),
+                   alpha=0.7, color=colors[powder_type_val], 
+                   label=f'Пороха ({powder_type_val})', s=60)
+    
+    ax1.axvline(x=avg_impulse, color='black', linestyle='--', alpha=0.7, label=f'Среднее: {avg_impulse:.3f}')
+    ax1.axvline(x=2.71, color='red', linestyle=':', alpha=0.7, label='Максимум: 2.71')
+    ax1.set_xlabel('Импульс I_e (МПа·с)')
+    ax1.set_ylabel('Средний расчетный импульс')
+    ax1.set_title(f'Сравнение импульсов - {powder_type}\n{params["name"]}')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    
+    # График 2: Отклонения от среднего
+    deviations = df_powders['powder_impulse'] - avg_impulse
+    colors_dev = [colors[t] for t in df_powders['type']]
+    
+    bars = ax2.barh(range(len(df_powders)), deviations, color=colors_dev, alpha=0.7)
+    ax2.axvline(x=0, color='black', linestyle='-', alpha=0.5)
+    ax2.set_xlabel('Отклонение от среднего (МПа·с)')
+    ax2.set_ylabel('Марка пороха')
+    ax2.set_title('Отклонения импульсов порохов от среднего')
+    ax2.set_yticks(range(len(df_powders)))
+    ax2.set_yticklabels(df_powders['name'], fontsize=8)
+    ax2.grid(True, alpha=0.3)
+    
+    # Добавляем значения на столбцы
+    for i, (bar, deviation) in enumerate(zip(bars, deviations)):
+        ax2.text(deviation + (0.01 if deviation >= 0 else -0.05), 
+                bar.get_y() + bar.get_height()/2,
+                f'{deviation:+.3f}', 
+                va='center', ha='left' if deviation >= 0 else 'right',
+                fontsize=8)
+    
+    plt.tight_layout()
+    plt.savefig(f'scatter_plot_{powder_type}.png', dpi=300, bbox_inches='tight')
+    plt.show()
+    
+    return fig
+
+# ВСТАВЬ ЭТО ПОСЛЕ ТВОЕГО ОСНОВНОГО КОДА:
+
+# После создания approved файлов добавляем визуализацию
+print(f"\n{'='*90}")
+print("📊 СОЗДАНИЕ ВИЗУАЛИЗАЦИИ")
+print(f"{'='*90}")
+
+# Для баллиститных порохов
+if ballistic_results:
+    print("Создание диаграммы рассеяния для баллиститных порохов...")
+    create_scatter_plot(ballistic_results, ballistic_powders, ballistic_params, 'ballistic')
+else:
+    print("❌ Нет данных для визуализации баллиститных порохов")
+
+# Для пироксилиновых порохов
+if pyroxylin_results:
+    print("Создание диаграммы рассеяния для пироксилиновых порохов...")
+    create_scatter_plot(pyroxylin_results, pyroxylin_powders, pyroxylin_params, 'pyroxylin')
+else:
+    print("❌ Нет данных для визуализации пироксилиновых порохов")
+
+print(f"\n{'='*90}")
+print("✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА")
+print(f"{'='*90}")
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+def create_sankey_diagram_png(results, powders_db, params, powder_type):
+    """Создает упрощенную Sankey диаграмму в формате PNG"""
+    
+    if not results:
+        print(f"Нет данных для Sankey диаграммы {powder_type}")
+        return
+    
+    # Упрощенная группировка
+    vardelta_bins = ['650-700', '701-750', '751-780']
+    rm_bins = ['0.1-0.3', '0.4-0.5']
+    impulse_bins = ['<1.5', '1.5-2.71']
+    
+    # Создаем упрощенную визуализацию с matplotlib
+    fig, ax = plt.subplots(figsize=(14, 8))
+    
+    # Упрощенные данные для отображения
+    categories = []
+    flows = []
+    
+    # Подсчитываем основные потоки
+    for vd_bin in vardelta_bins:
+        for rm_bin in rm_bins:
+            count = 0
+            for r in results:
+                vd_ok = False
+                rm_ok = False
+                
+                if vd_bin == '650-700' and 650 <= r['vardelta'] <= 700:
+                    vd_ok = True
+                elif vd_bin == '701-750' and 701 <= r['vardelta'] <= 750:
+                    vd_ok = True
+                elif vd_bin == '751-780' and 751 <= r['vardelta'] <= 780:
+                    vd_ok = True
+                
+                if rm_bin == '0.1-0.3' and 0.1 <= r['r_m'] <= 0.3:
+                    rm_ok = True
+                elif rm_bin == '0.4-0.5' and 0.4 <= r['r_m'] <= 0.5:
+                    rm_ok = True
+                
+                if vd_ok and rm_ok:
+                    count += 1
+            
+            if count > 0:
+                categories.append(f"{vd_bin}→{rm_bin}")
+                flows.append(count)
+    
+    # Создаем горизонтальную столбчатую диаграмму
+    y_pos = np.arange(len(categories))
+    
+    bars = ax.barh(y_pos, flows, alpha=0.7, color='lightblue', edgecolor='black')
+    
+    # Добавляем значения на столбцы
+    for i, (bar, flow) in enumerate(zip(bars, flows)):
+        ax.text(bar.get_width() + 0.1, bar.get_y() + bar.get_height()/2,
+                f'{flow} комб.', va='center', ha='left', fontsize=9)
+    
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(categories, fontsize=10)
+    ax.set_xlabel('Количество комбинаций')
+    ax.set_title(f'Sankey-подобная диаграмма - {powder_type}\n{params["name"]}', fontsize=12)
+    ax.grid(True, alpha=0.3, axis='x')
+    
+    # Добавляем информацию о порохах
+    calculated_impulses = [r['I_e'] for r in results]
+    min_impulse = min(calculated_impulses)
+    max_impulse = max(calculated_impulses)
+    
+    suitable_powders = []
+    for powder_name, data in powders_db.items():
+        if data['I_e'] > 2.71:
+            continue
+        if min_impulse <= data['I_e'] <= max_impulse:
+            suitable_powders.append(powder_name)
+    
+    # Ограничиваем количество для читаемости
+    suitable_powders = suitable_powders[:8]
+    
+    # Добавляем информацию о порохах как текст
+    powder_text = "Подходящие пороха:\n" + "\n".join([f"• {name}" for name in suitable_powders])
+    ax.text(0.02, 0.98, powder_text, transform=ax.transAxes, fontsize=9,
+            verticalalignment='top', bbox=dict(boxstyle="round,pad=0.3", facecolor="lightyellow", alpha=0.7))
+    
+    # Статистика
+    stats_text = f"Статистика:\nКомбинаций: {len(results)}\nДиапазон I_e: {min_impulse:.2f}-{max_impulse:.2f}\nСреднее: {np.mean(calculated_impulses):.2f}"
+    ax.text(0.98, 0.98, stats_text, transform=ax.transAxes, fontsize=9,
+            verticalalignment='top', horizontalalignment='right',
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgreen", alpha=0.7))
+    
+    plt.tight_layout()
+    plt.savefig(f'sankey_diagram_{powder_type}.png', dpi=300, bbox_inches='tight')
+    plt.show()
+    
+    print(f"✅ Sankey диаграмма (PNG) сохранена как sankey_diagram_{powder_type}.png")
+    
+    # Дополнительная информация в консоль
+    print(f"\n📋 СВОДКА ДЛЯ {powder_type.upper()}:")
+    print(f"   Всего комбинаций: {len(results)}")
+    print(f"   Диапазон импульсов: {min_impulse:.3f} - {max_impulse:.3f} МПа·с")
+    print(f"   Подходящих порохов: {len(suitable_powders)}")
+    if suitable_powders:
+        print(f"   Лучшие пороха: {', '.join(suitable_powders[:5])}")
+    
+    return fig
+
+# ВСТАВЬ ЭТО ПОСЛЕ ВИЗУАЛИЗАЦИИ №1:
+
+print(f"\n{'='*90}")
+print("📊 СОЗДАНИЕ SANKEY ДИАГРАММ (PNG)")
+print(f"{'='*90}")
+
+# Для баллиститных порохов
+if ballistic_results:
+    print("Создание Sankey диаграммы для баллиститных порохов...")
+    create_sankey_diagram_png(ballistic_results, ballistic_powders, ballistic_params, 'ballistic')
+else:
+    print("❌ Нет данных для Sankey диаграммы баллиститных порохов")
+
+# Для пироксилиновых порохов
+if pyroxylin_results:
+    print("Создание Sankey диаграммы для пироксилиновых порохов...")
+    create_sankey_diagram_png(pyroxylin_results, pyroxylin_powders, pyroxylin_params, 'pyroxylin')
+else:
+    print("❌ Нет данных для Sankey диаграммы пироксилиновых порохов")
+
+print(f"\n{'='*90}")
+print("✅ SANKEY ДИАГРАММЫ СОЗДАНЫ")
+print("📁 Файлы сохранены в формате PNG")
+print(f"{'='*90}")
+
+
+
+
+
+

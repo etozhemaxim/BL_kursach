@@ -56,10 +56,15 @@ def get_powder_type(powder_name, powder_data):
         powder_type = 'pyroxylin'
     
     # Определяем вид пороха по z_e
-    if z_e == 1:
+    # Баллиститные пороха всегда одноканальные (z_e = 1)
+    if powder_type == 'ballistite':
         powder_kind = 'single_channel'
     else:
-        powder_kind = 'multi_channel'
+        # Пироксилиновые могут быть как одноканальные, так и многоканальные
+        if z_e == 1:
+            powder_kind = 'single_channel'
+        else:
+            powder_kind = 'multi_channel'
     
     return powder_type, powder_kind
 
@@ -153,20 +158,20 @@ def analyze_powders_database():
     
     # Расчет для баллиститного пороха  
     print("Баллиститный порох:")
-    ball_tubular, ball_seven = calculate_all_variations(BALLISTITE, "баллиститного")
+    # Баллиститные пороха только трубчатые (одноканальные)
+    ball_tubular, _ = calculate_all_variations(BALLISTITE, "баллиститного")
     ball_tubular_avg, _, _ = calculate_statistics(ball_tubular)
-    ball_seven_avg, _, _ = calculate_statistics(ball_seven)
+    ball_seven_avg = 0.0  # Баллиститных многоканальных не существует
     
     print("\nСредние значения условных порохов:")
     print(f"  Пироксилиновые трубчатые: {pyro_tubular_avg:.4f} МПа·с")
     print(f"  Пироксилиновые семиканальные: {pyro_seven_avg:.4f} МПа·с")
     print(f"  Баллиститные трубчатые: {ball_tubular_avg:.4f} МПа·с")
-    print(f"  Баллиститные семиканальные: {ball_seven_avg:.4f} МПа·с")
+    print(f"  Баллиститные семиканальные: не существуют")
     
     # Массивы для хранения результатов анализа
     results = {
         'ballistite_single_channel': [],   # Баллиститные одноканальные
-        'ballistite_multi_channel': [],    # Баллиститные многоканальные
         'pyroxylin_single_channel': [],    # Пироксилиновые одноканальные
         'pyroxylin_multi_channel': []      # Пироксилиновые многоканальные
     }
@@ -191,16 +196,12 @@ def analyze_powders_database():
         I_e_db = powder_data['I_e']
         
         # Определяем среднее значение для сравнения
-        if powder_type == 'ballistite' and powder_kind == 'single_channel':
+        if powder_type == 'ballistite':
+            # Баллиститные пороха всегда одноканальные
             avg_I_e = ball_tubular_avg
             category = 'ballistite_single_channel'
             powder_type_ru = 'баллистит'
             powder_kind_ru = 'одноканал'
-        elif powder_type == 'ballistite' and powder_kind == 'multi_channel':
-            avg_I_e = ball_seven_avg
-            category = 'ballistite_multi_channel'
-            powder_type_ru = 'баллистит'
-            powder_kind_ru = 'многоканал'
         elif powder_type == 'pyroxylin' and powder_kind == 'single_channel':
             avg_I_e = pyro_tubular_avg
             category = 'pyroxylin_single_channel'
@@ -235,77 +236,145 @@ def analyze_powders_database():
     
     return results, {
         'ballistite_single_channel_avg': ball_tubular_avg,
-        'ballistite_multi_channel_avg': ball_seven_avg,
         'pyroxylin_single_channel_avg': pyro_tubular_avg,
         'pyroxylin_multi_channel_avg': pyro_seven_avg
     }
 
 def plot_results(results, avg_values):
-    """Построение графиков отклонений"""
-    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-    fig.suptitle('Отклонение импульсов порохов от средних значений по категориям', fontsize=16, fontweight='bold')
+    """Построение графиков отклонений - оптимизировано для половины листа А4"""
     
     categories = [
-        ('ballistite_single_channel', 'Баллиститные одноканальные', 'red', axes[0, 0]),
-        ('ballistite_multi_channel', 'Баллиститные многоканальные', 'blue', axes[0, 1]),
-        ('pyroxylin_single_channel', 'Пироксилиновые одноканальные', 'green', axes[1, 0]),
-        ('pyroxylin_multi_channel', 'Пироксилиновые многоканальные', 'orange', axes[1, 1])
+        ('ballistite_single_channel', '', 'red'),
+        ('pyroxylin_single_channel', '', 'green'),
+        ('pyroxylin_multi_channel', '', 'orange')
     ]
     
-    for category, title, color, ax in categories:
+    # Создаем отдельные фигуры для каждого графика
+    for category, title, color in categories:
         data = results[category]
         
         if not data:
-            ax.text(0.5, 0.5, 'Нет данных', ha='center', va='center', transform=ax.transAxes, fontsize=14)
-            ax.set_title(title, fontsize=12, fontweight='bold')
+            print(f"Нет данных для категории: {title}")
             continue
+        
+        # Создаем новую фигуру для половины листа А4 (8.27 x 5.845 дюймов)
+        fig, ax = plt.subplots(figsize=(8.27, 5.845))  # Половина А4
         
         # Извлекаем данные для графика
         deviations = [d['deviation_percent'] for d in data]
         impulses = [d['I_e'] for d in data]
         names = [d['name'] for d in data]
         
-        # Строим график
-        scatter = ax.scatter(deviations, impulses, c=color, alpha=0.7, s=60, edgecolors='black', linewidth=0.5)
+        # Сортируем данные по отклонению для лучшего отображения
+        sorted_indices = np.argsort(deviations)
+        deviations_sorted = [deviations[i] for i in sorted_indices]
+        impulses_sorted = [impulses[i] for i in sorted_indices]
+        names_sorted = [names[i] for i in sorted_indices]
+        
+        # Строим график с уменьшенными точками
+        scatter = ax.scatter(deviations_sorted, impulses_sorted, c=color, alpha=0.8, s=60, 
+                           edgecolors='black', linewidth=0.6, zorder=5)
         
         # Добавляем среднюю линию
         avg_key = f"{category}_avg"
         if avg_key in avg_values:
             avg_line = avg_values[avg_key]
-            ax.axhline(y=avg_line, color='red', linestyle='--', alpha=0.7, label=f'Среднее: {avg_line:.3f}')
+            ax.axhline(y=avg_line, color='darkred', linestyle='--', alpha=0.8, 
+                      linewidth=2.0, label=f'Среднее: {avg_line:.3f} МПа·с', zorder=3)
         
-        # Настройки графика
-        ax.set_xlabel('Отклонение от среднего (%)', fontsize=10)
-        ax.set_ylabel('Импульс I_e (МПа·с)', fontsize=10)
-        ax.set_title(title, fontsize=12, fontweight='bold')
-        ax.grid(True, alpha=0.3)
-        ax.legend()
+        # Настройки графика для компактного отображения
+        ax.set_xlabel('Отклонение от среднего (%)', fontsize=10, fontweight='bold')
+        ax.set_ylabel('Импульс пороха (МПа·с)', fontsize=10, fontweight='bold')
+        ax.set_title(f'{title}', fontsize=12, fontweight='bold', pad=10)
         
-        # Добавляем аннотации для некоторых точек
-        for i, (dev, imp, name) in enumerate(zip(deviations, impulses, names)):
-            if i % 3 == 0:  # Аннотируем каждую 3-ю точку чтобы не загромождать
-                ax.annotate(name, (dev, imp), xytext=(5, 5), textcoords='offset points', 
-                           fontsize=8, alpha=0.7)
-    
-    plt.tight_layout()
-    plt.show()
-    
-    # Дополнительная статистика по категориям
-    print(f"\nСтатистика по категориям:")
-    print("=" * 80)
-    print(f"{'Категория':<30} {'Кол-во':<8} {'Среднее откл. %':<15} {'Мин откл. %':<12} {'Макс откл. %':<12}")
-    print("-" * 80)
-    
-    for category, title, _, _ in categories:
-        data = results[category]
-        if data:
-            deviations = [d['deviation_percent'] for d in data]
-            avg_dev = sum(deviations) / len(deviations)
-            min_dev = min(deviations)
-            max_dev = max(deviations)
-            print(f"{title:<30} {len(data):<8} {avg_dev:<15.2f} {min_dev:<12.2f} {max_dev:<12.2f}")
-        else:
-            print(f"{title:<30} {0:<8} {'-':<15} {'-':<12} {'-':<12}")
+        # Улучшенная сетка
+        ax.grid(True, alpha=0.2, linestyle='-', linewidth=0.3)
+        ax.set_axisbelow(True)
+        
+        # Настраиваем шкалы для лучшего отображения
+        x_range = max(deviations_sorted) - min(deviations_sorted)
+        y_range = max(impulses_sorted) - min(impulses_sorted)
+        
+        x_margin = x_range * 0.1 if x_range > 0 else 3
+        y_margin = y_range * 0.1 if y_range > 0 else 0.05
+        
+        ax.set_xlim(min(deviations_sorted) - x_margin, max(deviations_sorted) + x_margin)
+        ax.set_ylim(min(impulses_sorted) - y_margin, max(impulses_sorted) + y_margin)
+        
+        # Компактное добавление аннотаций
+        for i, (dev, imp, name) in enumerate(zip(deviations_sorted, impulses_sorted, names_sorted)):
+            # Определяем позицию текста в зависимости от положения точки
+            if dev >= 0:
+                ha = 'left'
+                xytext = (6, 0)
+            else:
+                ha = 'right'
+                xytext = (-6, 0)
+            
+            # Добавляем небольшое вертикальное смещение для точек с близкими координатами
+            vertical_offset = (i % 4 - 1.5) * 6  # -9, -3, +3, +9 пикселей
+            
+            # Для точек с очень близкими координатами увеличиваем смещение
+            if i > 0 and abs(deviations_sorted[i] - deviations_sorted[i-1]) < 0.5:
+                vertical_offset += 8
+            
+            ax.annotate(name, (dev, imp), 
+                       xytext=(xytext[0], xytext[1] + vertical_offset),
+                       textcoords='offset points',
+                       fontsize=7, fontweight='normal',
+                       ha=ha, va='center',
+                       bbox=dict(boxstyle='round,pad=0.15', 
+                               facecolor='white', 
+                               alpha=0.9, 
+                               edgecolor='gray',
+                               linewidth=0.3),
+                       arrowprops=dict(arrowstyle='->', 
+                                    color='gray', 
+                                    alpha=0.5,
+                                    linewidth=0.6),
+                       zorder=4)
+        
+        # Добавляем статистику на график в левый нижний угол (уменьшенный шрифт)
+        stats_text = (f'Всего: {len(data)}\n'
+                     f'Ср. откл.: {np.mean(deviations):.1f}%\n'
+                     f'Макс. откл.: {max(abs(d) for d in deviations):.1f}%\n'
+                     f'Импульсы: {min(impulses):.3f}-{max(impulses):.3f}')
+        
+        ax.text(0.02, 0.98, stats_text, transform=ax.transAxes, fontsize=10,
+                verticalalignment='top', 
+                bbox=dict(boxstyle='round,pad=0.5', 
+                        facecolor='lightblue', 
+                        alpha=0.8,
+                        edgecolor='navy'))
+        
+        # Компактная легенда
+        ax.legend(fontsize=9, loc='upper right', framealpha=0.9)
+        
+        # Улучшаем тики на осях
+        ax.tick_params(axis='both', which='major', labelsize=8)
+        
+        # Добавляем вертикальную линию в ноль для ориентира
+        ax.axvline(x=0, color='gray', linestyle='-', alpha=0.5, linewidth=0.8)
+        
+        # Оптимизируем layout для половины А4
+        plt.tight_layout(pad=1.5)
+        plt.subplots_adjust(top=0.92, bottom=0.08, left=0.1, right=0.95)
+        
+        # Сохраняем график в файл
+        filename = f"powder_analysis_{category}.png"
+        plt.savefig(filename, dpi=300, bbox_inches='tight')
+        print(f"График сохранен как: {filename}")
+        
+        plt.show()
+        
+        # Выводим статистику в консоль
+        print(f"\nСтатистика для {title}:")
+        print(f"  Количество порохов: {len(data)}")
+        print(f"  Среднее отклонение: {np.mean(deviations):.2f}%")
+        print(f"  Минимальное отклонение: {min(deviations):.2f}%")
+        print(f"  Максимальное отклонение: {max(deviations):.2f}%")
+        print(f"  Средний импульс: {np.mean(impulses):.3f} МПа·с")
+        print(f"  Диапазон импульсов: {min(impulses):.3f}-{max(impulses):.3f} МПа·с")
 
 # Основная программа
 def main():

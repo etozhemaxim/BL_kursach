@@ -1,304 +1,248 @@
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 
-def read_results_file(filename):
-    """Чтение данных из файла results.txt"""
-    try:
-        # Читаем файл как CSV с разделителем запятой
-        df = pd.read_csv(filename)
-        return df
-    except Exception as e:
-        print(f"Ошибка при чтении файла: {e}")
-        return None
+# Настройка стиля
+plt.style.use('default')
+plt.rcParams['font.family'] = 'DejaVu Sans'
 
-def plot_results(data):
-    """Построение графика"""
-    # Создаем фигуру и оси
-    fig, ax = plt.subplots(figsize=(14, 10))
+def load_and_process_data(filename):
+    """Загрузка и обработка данных"""
+    df = pd.read_csv(filename)
     
-    # Определяем маркеры для разного количества порохов (добавлен маркер для 4 порохов)
-    markers = {
-        1: 'o',  # круг для одного пороха
-        2: 's',  # квадрат для двух порохов
-        3: '*',  # звезда для трех порохов
-        4: 'D',  # ромб для четырех порохов
-    }
+    # Преобразование типов данных
+    numeric_columns = ['p_max_mpa', 'v_pm_mps', 'x_pm_m', 'omega_sum_kg', 'W_0_m3', 'delta_kg_m3']
+    for col in numeric_columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
     
-    marker_sizes = {
-        1: 100,   # размер для круга
-        2: 80,    # размер для квадрата
-        3: 120,   # размер для звезды
-        4: 100    # размер для ромба
-    }
+    # Фильтрация только типа "Свободная" и только 2, 3, 4 пороха
+    df = df[(df['type'] == 'Свободная') & (df['num_powders'].isin([2, 3, 4]))]
     
-    # Получаем уникальные типы смесей для цветовой шкалы
-    unique_types = data['type'].unique()
-    n_types = len(unique_types)
-    
-    # Создаем цветовую карту для типов
-    colors = plt.cm.Set3(np.linspace(0, 1, n_types))
-    type_color_map = {type_name: color for type_name, color in zip(unique_types, colors)}
-    
-    # Создаем scatter plot для каждого типа num_powders
-    scatter_plots = []
-    labels = []
-    
-    for num_powders in sorted(data['num_powders'].unique()):
-        if num_powders in markers:
-            # Фильтруем данные по количеству порохов
-            filtered_data = data[data['num_powders'] == num_powders]
-            
-            # Создаем scatter plot
-            for i, row in filtered_data.iterrows():
-                scatter = ax.scatter(
-                    row['p_max_mpa'], 
-                    row['x_pm_m'], 
-                    c=[type_color_map[row['type']]],
-                    marker=markers[num_powders],
-                    s=marker_sizes[num_powders],
-                    alpha=0.7,
-                    edgecolors='black',
-                    linewidth=0.8
-                )
-            
-            # Сохраняем один экземпляр для легенды
-            scatter_plots.append(scatter)
-            labels.append(f'{num_powders} порох(а)')
-    
-    # Создаем легенду для типов смесей
-    from matplotlib.patches import Patch
-    legend_elements = [Patch(facecolor=type_color_map[type_name], label=type_name) 
-                      for type_name in unique_types]
-    
-    ax.legend(handles=legend_elements, title='Типы смесей:', 
-              loc='upper left', bbox_to_anchor=(1, 1), framealpha=0.9)
-    
-    # Настройка осей и заголовка
-    ax.set_xlabel('Максимальное давление, p_max_mpa (МПа)', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Длина ствола, x_pm_m (м)', fontsize=12, fontweight='bold')
-    ax.set_title('Зависимость длины ствола от максимального давления\n'
-                'Цвет: тип смеси | Маркеры: количество порохов', 
-                fontsize=14, fontweight='bold', pad=20)
-    
-    # Добавляем легенду для маркеров
-    ax.legend(scatter_plots, labels, title='Количество порохов:', 
-              loc='upper right', framealpha=0.9)
-    
-    # Добавляем обратно легенду для типов (первая легенда перезаписалась)
-    ax.legend(handles=legend_elements, title='Типы смесей:', 
-              loc='upper left', bbox_to_anchor=(1, 1), framealpha=0.9)
-    
-    # Сетка для лучшей читаемости
-    ax.grid(True, alpha=0.3, linestyle='--')
-    
-    # Улучшаем внешний вид
-    ax.tick_params(axis='both', which='major', labelsize=10)
-    
-    # Автоматическая настройка layout
-    plt.tight_layout()
-    
-    # Показываем график
-    plt.show()
+    return df
 
-def plot_results_improved(data):
-    """Улучшенная версия графика с двумя легендами"""
-    # Создаем фигуру и оси
-    fig, ax = plt.subplots(figsize=(15, 10))
+def create_pressure_vs_length_plot(df):
+    """Создание графика зависимости давления от длины ствола"""
     
-    # Определяем маркеры для разного количества порохов (добавлен маркер для 4 порохов)
-    markers = {
-        1: 'o',  # круг для одного пороха
-        2: 's',  # квадрат для двух порохов
-        3: '*',  # звезда для трех порохов
-        4: 'D',  # ромб для четырех порохов
-    }
+    if len(df) == 0:
+        print("Нет данных для типа 'Свободная' с 2, 3, 4 порохами")
+        return
     
-    marker_sizes = {
-        1: 100,   # размер для круга
-        2: 80,    # размер для квадрата
-        3: 120,   # размер для звезды
-        4: 100    # размер для ромба
-    }
+    # Создаем фигуру
+    plt.figure(figsize=(12, 8))
     
-    # Получаем уникальные типы смесей для цветовой шкалы
-    unique_types = data['type'].unique()
-    n_types = len(unique_types)
+    # Дискретная цветовая схема
+    colors = {2: 'red', 3: 'blue', 4: 'green'}
+    markers = {2: 'o', 3: 's', 4: '^'}
     
-    # Создаем цветовую карту для типов
-    colors = plt.cm.Set3(np.linspace(0, 1, n_types))
-    type_color_map = {type_name: color for type_name, color in zip(unique_types, colors)}
-    
-    # Создаем отдельные scatter plots для легенды маркеров
-    marker_legend_elements = []
-    
-    for num_powders in sorted(data['num_powders'].unique()):
-        if num_powders in markers:
-            # Фильтруем данные по количеству порохов
-            filtered_data = data[data['num_powders'] == num_powders]
-            
-            # Группируем по типам для лучшего отображения
-            for type_name in filtered_data['type'].unique():
-                type_data = filtered_data[filtered_data['type'] == type_name]
-                
-                scatter = ax.scatter(
-                    type_data['p_max_mpa'], 
-                    type_data['x_pm_m'], 
-                    c=[type_color_map[type_name]],
-                    marker=markers[num_powders],
-                    s=marker_sizes[num_powders],
-                    alpha=0.7,
-                    edgecolors='black',
-                    linewidth=0.8,
-                    label=f'{num_powders} порох(а)' if type_name == filtered_data['type'].iloc[0] else ""
-                )
-            
-            # Добавляем элемент для легенды маркеров
-            marker_legend_elements.append(
-                plt.Line2D([0], [0], marker=markers[num_powders], color='gray', 
-                          markersize=10, label=f'{num_powders} порох(а)', 
-                          linestyle='None', markeredgecolor='black')
-            )
-    
-    # Создаем легенду для типов смесей
-    from matplotlib.patches import Patch
-    type_legend_elements = [Patch(facecolor=type_color_map[type_name], label=type_name) 
-                          for type_name in unique_types]
-    
-    # Добавляем первую легенду (типы смесей)
-    type_legend = ax.legend(handles=type_legend_elements, title='Типы смесей:', 
-                           loc='upper left', bbox_to_anchor=(1, 1), framealpha=0.9)
-    ax.add_artist(type_legend)
-    
-    # Добавляем вторую легенду (маркеры)
-    ax.legend(handles=marker_legend_elements, title='Количество порохов:', 
-              loc='upper left', bbox_to_anchor=(1, 0.7), framealpha=0.9)
-    
-    # Настройка осей и заголовка
-    ax.set_xlabel('Максимальное давление, p_max_mpa (МПа)', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Длина ствола, x_pm_m (м)', fontsize=12, fontweight='bold')
-    ax.set_title('Зависимость длины ствола от максимального давления\n'
-                'Цвет: тип смеси | Маркеры: количество порохов', 
-                fontsize=14, fontweight='bold', pad=20)
-    
-    # Сетка для лучшей читаемости
-    ax.grid(True, alpha=0.3, linestyle='--')
-    
-    # Улучшаем внешний вид
-    ax.tick_params(axis='both', which='major', labelsize=10)
-    
-    # Автоматическая настройка layout
-    plt.tight_layout()
-    
-    # Показываем график
-    plt.show()
-
-def print_statistics(data):
-    """Вывод статистики по данным"""
-    print("Статистика данных:")
-    print(f"Всего записей: {len(data)}")
-    print(f"Типы смесей: {list(data['type'].unique())}")
-    print(f"Количество порохов в смесях: {sorted(data['num_powders'].unique())}")
-    print(f"Диапазон давления: {data['p_max_mpa'].min():.1f} - {data['p_max_mpa'].max():.1f} МПа")
-    print(f"Диапазон длины ствола: {data['x_pm_m'].min():.3f} - {data['x_pm_m'].max():.3f} м")
-    print("\n")
-
-def main():
-    """Основная функция"""
-    try:
-        # Чтение данных из файла
-        data = read_results_file('results.txt')
+    # Рисуем точки для каждого количества порохов
+    for num_powders in [2, 3, 4]:
+        mask = df['num_powders'] == num_powders
+        subset = df[mask]
         
-        if data is None or data.empty:
-            print("Файл results.txt пуст или содержит некорректные данные")
-            return
-        
-        print(f"Прочитано {len(data)} записей")
-        print_statistics(data)
-        
-        # Проверяем наличие необходимых столбцов
-        required_columns = ['p_max_mpa', 'x_pm_m', 'type', 'num_powders']
-        missing_columns = [col for col in required_columns if col not in data.columns]
-        
-        if missing_columns:
-            print(f"Отсутствуют необходимые столбцы: {missing_columns}")
-            print(f"Доступные столбцы: {list(data.columns)}")
-            return
-        
-        # Построение графика (используем улучшенную версию)
-        plot_results_improved(data)
-        
-    except FileNotFoundError:
-        print("Файл results.txt не найден")
-        print("Убедитесь, что файл находится в той же директории, что и программа")
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-
-# Дополнительная функция для графика с аннотациями
-def plot_detailed_results(data):
-    """Построение графика с аннотациями названий смесей"""
-    fig, ax = plt.subplots(figsize=(16, 12))
+        if len(subset) > 0:
+            plt.scatter(subset['x_pm_m'], subset['p_max_mpa'],
+                       c=colors[num_powders],
+                       marker=markers[num_powders],
+                       s=80,
+                       alpha=0.7,
+                       edgecolors='black',
+                       linewidth=0.8,
+                       label=f'{num_powders} пороха')
     
-    # Обновленные маркеры с поддержкой 4 порохов
-    markers = {1: 'o', 2: 's', 3: '*', 4: 'D'}
+    plt.xlabel('Длина ствола, м', fontsize=12, fontweight='bold')
+    plt.ylabel('Максимальное давление, МПа', fontsize=12, fontweight='bold')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
     
-    # Получаем уникальные типы смесей
-    unique_types = data['type'].unique()
-    colors = plt.cm.Set3(np.linspace(0, 1, len(unique_types)))
-    type_color_map = {type_name: color for type_name, color in zip(unique_types, colors)}
-    
-    for num_powders in sorted(data['num_powders'].unique()):
-        if num_powders in markers:
-            filtered_data = data[data['num_powders'] == num_powders]
-            
-            for type_name in filtered_data['type'].unique():
-                type_data = filtered_data[filtered_data['type'] == type_name]
-                
-                ax.scatter(
-                    type_data['p_max_mpa'], 
-                    type_data['x_pm_m'], 
-                    c=[type_color_map[type_name]],
-                    marker=markers[num_powders],
-                    s=100,
-                    alpha=0.7,
-                    edgecolors='black',
-                    linewidth=0.8
-                )
-    
-    # Добавляем аннотации с названиями смесей
-    for i, row in data.iterrows():
-        ax.annotate(row['name'], 
-                   (row['p_max_mpa'], row['x_pm_m']),
-                   xytext=(5, 5), textcoords='offset points',
-                   fontsize=8, alpha=0.7)
-    
-    # Легенды
-    from matplotlib.patches import Patch
-    type_legend_elements = [Patch(facecolor=type_color_map[type_name], label=type_name) 
-                          for type_name in unique_types]
-    
-    marker_legend_elements = [
-        plt.Line2D([0], [0], marker=markers[num], color='gray', markersize=10, 
-                  label=f'{num} порох(а)', linestyle='None', markeredgecolor='black')
-        for num in markers.keys() if num in data['num_powders'].unique()
-    ]
-    
-    ax.legend(handles=type_legend_elements + marker_legend_elements, 
-              title='Условные обозначения', loc='best', framealpha=0.9)
-    
-    ax.set_xlabel('Максимальное давление, p_max_mpa (МПа)', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Длина ствола, x_pm_m (м)', fontsize=12, fontweight='bold')
-    ax.set_title('Зависимость длины ствола от максимального давления с названиями смесей', 
-                fontsize=14, fontweight='bold')
-    
-    ax.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
 
+def detailed_analysis(df):
+    """Детальный статистический анализ"""
+    
+    if len(df) == 0:
+        return
+    
+    print("=" * 60)
+    print("ДЕТАЛЬНЫЙ АНАЛИЗ: ТИП 'СВОБОДНАЯ' (2-4 ПОРОХА)")
+    print("=" * 60)
+    
+    # Основная статистика
+    print(f"\nОбщее количество смесей: {len(df)}")
+    
+    # Статистика по количеству порохов
+    powder_count_stats = df['num_powders'].value_counts().sort_index()
+    print(f"\nРаспределение по числу порохов:")
+    for num, count in powder_count_stats.items():
+        print(f"  {num} пороха: {count} смесей")
+    
+    # Статистика по группам
+    print(f"\nСтатистика по группам:")
+    stats_by_powders = df.groupby('num_powders').agg({
+        'p_max_mpa': ['count', 'mean', 'std', 'min', 'max'],
+        'x_pm_m': ['mean', 'std', 'min', 'max'],
+        'v_pm_mps': ['mean', 'std'],
+        'omega_sum_kg': ['mean', 'std']
+    }).round(3)
+    
+    print(stats_by_powders)
+    
+    # Анализ эффективности
+    df['efficiency'] = df['v_pm_mps'] / df['p_max_mpa']
+    
+    print(f"\nАнализ эффективности (скорость/давление):")
+    efficiency_stats = df.groupby('num_powders')['efficiency'].agg(['mean', 'std', 'min', 'max']).round(4)
+    print(efficiency_stats)
+
+def create_comparison_boxplots(df):
+    """Создание boxplot для сравнения распределений"""
+    
+    if len(df) == 0:
+        return
+    
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    
+    # Boxplot для давлений
+    pressure_data = [df[df['num_powders'] == num]['p_max_mpa'] for num in [2, 3, 4]]
+    ax1.boxplot(pressure_data, labels=['2 пороха', '3 пороха', '4 пороха'])
+    ax1.set_ylabel('Максимальное давление (МПа)', fontweight='bold')
+    ax1.set_title('Распределение давлений по числу порохов', fontweight='bold')
+    ax1.grid(True, alpha=0.3)
+    
+    # Boxplot для длин стволов
+    length_data = [df[df['num_powders'] == num]['x_pm_m'] for num in [2, 3, 4]]
+    ax2.boxplot(length_data, labels=['2 пороха', '3 пороха', '4 пороха'])
+    ax2.set_ylabel('Длина ствола (м)', fontweight='bold')
+    ax2.set_title('Распределение длин стволов по числу порохов', fontweight='bold')
+    ax2.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.show()
+
+def find_optimal_solutions(df):
+    """Поиск оптимальных решений"""
+    
+    if len(df) == 0:
+        return
+    
+    print(f"\n" + "=" * 60)
+    print("ОПТИМАЛЬНЫЕ РЕШЕНИЯ")
+    print("=" * 60)
+    
+    # Лучшие решения по эффективности для каждого числа порохов
+    for num_powders in [2, 3, 4]:
+        mask = df['num_powders'] == num_powders
+        subset = df[mask]
+        
+        if len(subset) > 0:
+            best_efficiency = subset.nlargest(3, 'efficiency')
+            print(f"\nТоп-3 по эффективности ({num_powders} пороха):")
+            for _, row in best_efficiency.iterrows():
+                print(f"  {row['name']:30} | Длина: {row['x_pm_m']:5.3f} м | "
+                      f"Давление: {row['p_max_mpa']:6.1f} МПа | "
+                      f"Эффективность: {row['efficiency']:5.3f}")
+import pandas as pd
+
+def load_and_process_data(filename):
+    """Загрузка и обработка данных"""
+    df = pd.read_csv(filename)
+    
+    # Преобразование типов данных
+    numeric_columns = ['p_max_mpa', 'v_pm_mps', 'x_pm_m', 'omega_sum_kg', 'W_0_m3', 'delta_kg_m3']
+    for col in numeric_columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    
+    # Фильтрация только типа "Свободная"
+    df = df[df['type'] == 'Свободная']
+    
+    return df
+
+def find_top_solutions_by_length(df):
+    """Поиск 10 лучших решений по длине ствола"""
+    
+    if len(df) == 0:
+        print("Нет данных для типа 'Свободная'")
+        return
+    
+    # Сортируем по длине ствола (чем короче - тем лучше)
+    df_sorted = df.sort_values('x_pm_m')
+    
+    # Берем топ-10 решений
+    top_10 = df_sorted.head(10)
+    
+    print("=" * 80)
+    print("ТОП-10 ЛУЧШИХ РЕШЕНИЙ (ТИП: СВОБОДНАЯ)")
+    print("Критерий: минимальная длина ствола")
+    print("=" * 80)
+    
+    print(f"{'Марка смеси':<35} {'Длина ствола, м':<15} {'Давление, МПа':<15} {'Число порохов':<12}")
+    print("-" * 80)
+    
+    for i, (index, row) in enumerate(top_10.iterrows(), 1):
+        print(f"{i:2}. {row['name']:<32} {row['x_pm_m']:<15.3f} {row['p_max_mpa']:<15.1f} {row['num_powders']:<12}")
+    
+    # Дополнительная статистика
+    print("\n" + "=" * 80)
+    print("СТАТИСТИКА ТОП-10 РЕШЕНИЙ:")
+    print(f"Диапазон длин стволов: {top_10['x_pm_m'].min():.3f} - {top_10['x_pm_m'].max():.3f} м")
+    print(f"Диапазон давлений: {top_10['p_max_mpa'].min():.1f} - {top_10['p_max_mpa'].max():.1f} МПа")
+    
+    # Распределение по числу порохов
+    powder_dist = top_10['num_powders'].value_counts().sort_index()
+    print("Распределение по числу порохов:")
+    for num, count in powder_dist.items():
+        print(f"  {num} пороха: {count} решений")
+
+def find_top_solutions_by_length_with_speed_filter(df, min_speed=940):
+    """Поиск лучших решений по длине ствола с фильтром по скорости"""
+    
+    if len(df) == 0:
+        print("Нет данных для типа 'Свободная'")
+        return
+    
+    # Фильтруем по минимальной скорости
+    df_filtered = df[df['v_pm_mps'] >= min_speed]
+    
+    if len(df_filtered) == 0:
+        print(f"Нет решений со скоростью ≥ {min_speed} м/с")
+        return
+    
+    # Сортируем по длине ствола
+    df_sorted = df_filtered.sort_values('x_pm_m')
+    
+    # Берем топ-10 решений
+    top_10 = df_sorted.head(10)
+    
+    print("\n" + "=" * 80)
+    print(f"ТОП-10 РЕШЕНИЙ СО СКОРОСТЬЮ ≥ {min_speed} М/С")
+    print("Критерий: минимальная длина ствола")
+    print("=" + 80)
+    
+    print(f"{'Марка смеси':<35} {'Длина ствола, м':<15} {'Давление, МПа':<15} {'Скорость, м/с':<15}")
+    print("-" * 80)
+    
+    for i, (index, row) in enumerate(top_10.iterrows(), 1):
+        print(f"{i:2}. {row['name']:<32} {row['x_pm_m']:<15.3f} {row['p_max_mpa']:<15.1f} {row['v_pm_mps']:<15.1f}")
+
+
+# Основная программа
 if __name__ == "__main__":
-    main()
+    # Загрузка данных
+    df = load_and_process_data('results.txt')
     
-    # Раскомментируйте для графика с аннотациями названий
-    # data = read_results_file('results.txt')
-    # if data is not None and not data.empty:
-    #     plot_detailed_results(data)
+    if len(df) > 0:
+        # Вывод общей информации
+        print(f"Найдено решений типа 'Свободная': {len(df)}")
+        print(f"Диапазон длин стволов: {df['x_pm_m'].min():.3f} - {df['x_pm_m'].max():.3f} м")
+        print(f"Диапазон давлений: {df['p_max_mpa'].min():.1f} - {df['p_max_mpa'].max():.1f} МПа")
+        print()
+        
+        # Топ-10 по длине ствола
+        find_top_solutions_by_length(df)
+        
+        # Топ-10 с фильтром по скорости (опционально)
+        find_top_solutions_by_length_with_speed_filter(df, min_speed=940)
+        
+    else:
+        print("Нет данных типа 'Свободная' в файле results.txt")

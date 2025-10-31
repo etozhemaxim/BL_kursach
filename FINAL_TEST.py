@@ -7,8 +7,8 @@ from baza_powder import powders_db
 
 # Параметры для варьирования
 omega_sum_range = np.linspace(0.1, 8, 4)  # общая масса пороха в кг
-delta_range = np.linspace(440, 700, 15)   # плотность заряжания
-alpha_range = np.linspace(0.1, 0.9, 4)    # доля первого пороха (0.1-0.9)
+delta_range = np.linspace(300, 700, 8)   # плотность заряжания
+alpha_range = np.linspace(0.1, 0.9, 14)    # доля первого пороха (0.1-0.9)
 
 
 class Powders:
@@ -17,7 +17,7 @@ class Powders:
         self.powders = ['ДГ-4 14/1', '4/1 фл', '5/1', 'ДГ-3 13/1', '4/1 фл', '5/1', 'ДГ-4 15/1', '4/1 фл', '5/1', 'АПЦ-235 П 16/1', '4/1 фл', '5/1', 'ДГ-3 14/1', '4/1 фл', '5/1', 'МАП-1 23/1', '4/1 фл', '5/1', 'БНГ-1355 25/1', '4/1 фл', '5/1', 'НДТ-3 16/1', '4/1 фл', '5/1', 'ДГ-2 15/1', '4/1 фл', '5/1', 'УГФ-1', '4/1 фл', '5/1', 'УГ-1', '4/1 фл', '5/1', 'ДГ-3 17/1', '4/1 фл', '5/1', 'НДТ-2 16/1', '4/1 фл', '5/1', 'НДТ-3 18/1', '4/1 фл', '5/1', 'ДГ-3 18/1', '4/1 фл', '5/1', 'ДГ-2 17/1', '4/1 фл', '5/1', 'НДТ-3 19/1', '4/1 фл', '5/1', 'ДГ-3 20/1', '4/1 фл', '5/1', 'НДТ-2 19/1', '4/1 фл', '5/1', '12/1 тр МН', '4/1 фл', '5/1', '7/1 УГ', '4/1 фл', '5/1', '15/1 тр В/А', '4/1 фл', '5/1', '8/1 УГ', '4/1 фл', '5/1', '16/1 тр В/А', '4/1 фл', '5/1', '11/1 БП', '4/1 фл', '5/1', '12/1 тр БП', '4/1 фл', '5/1', '18/1 тр', '4/1 фл', '5/1', '16/1 тр', '4/1 фл', '5/1', '22/1 тр', '4/1 фл', '5/1', '11/1 УГ', '4/1 фл', '5/1', '12/1 УГ', '4/1 фл', '5/1', '18/1 тр БП', '4/1 фл', '5/1', '9/7 МН', '4/1 фл', '5/1', '12/7', '4/1 фл', '5/1', '14/7 В/А', '4/1 фл', '5/1', '15/7', '4/1 фл', '5/1', '9/7 БП', '4/1 фл', '5/1', '14/7', '4/1 фл', '5/1', '17/7', '4/1 фл', '5/1', '14/7 БП', '4/1 фл', '5/1']
     
 powders_DB = Powders()
-available_powders = [p for p in powders_DB.powders[:] if p in powders_db]
+available_powders = [p for p in powders_DB.powders[35:40] if p in powders_db]
 db = available_powders
 
 
@@ -33,7 +33,30 @@ opts['stop_conditions']['x_p'] = 5.625
 # Создаем список для успешных решений
 successful_solutions = []
 
+def save_solution_to_file(solution, filename="result2.txt"):
+    """Сохраняет решение в файл"""
+    with open(filename, "a", encoding="utf-8") as f:
+        f.write(f"{solution['powder1']},{solution['powder2']},"
+                f"{solution['mass1']:.3f},{solution['mass2']:.3f},"
+                f"{solution['alpha']:.3f},{solution['omega_sum']:.3f},"
+                f"{solution['omega_q_ratio']:.3f},{solution['delta']:.1f},"
+                f"{solution['W_0']:.6f},{solution['Z_b1']:.6e},"
+                f"{solution['velocity']:.2f},{solution['velocity_cold']:.2f},{solution['velocity_hot']:.2f},"
+                f"{solution['pressure_max']/1e6:.2f},{solution['pressure_hot']/1e6:.2f},"
+                f"{solution['x_p']:.3f},{solution['x_e']:.3f},"
+                f"{solution['f_sum']:.0f},{solution['delta_sum']:.1f},{solution['b_sum']:.6f},{solution['k_sum']:.3f}\n")
+
+def initialize_result_file(filename="result2.txt"):
+    """Инициализирует файл с заголовками"""
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("powder1,powder2,mass1_kg,mass2_kg,alpha,omega_sum_kg,omega_q_ratio,delta_kg_m3,W0_m3,Z_b1,"
+                "velocity_mps,velocity_cold_mps,velocity_hot_mps,pressure_max_mpa,pressure_hot_mpa,"
+                "x_p_m,x_e_m,f_sum,delta_sum,b_sum,k_sum\n")
+
 def calculation_2(db, omega_sum_range, delta_range, alpha_range):
+    
+    # Инициализируем файл результатов
+    initialize_result_file()
     
     # Создаем все уникальные пары порохов
     powder_combinations = list(itertools.combinations(db, 2))
@@ -88,63 +111,96 @@ def calculation_2(db, omega_sum_range, delta_range, alpha_range):
 
                         try:
                             # Расчет при нормальных условиях
-                            result = ozvb_termo(opts)
+                            result_normal = ozvb_termo(opts)
                             
-                            x_pm = result['x_p'][-1]
-                            v_pm = result['v_p'][-1]
-                            p_max = max(result['p_m'])
+                            x_pm = result_normal['x_p'][-1]
+                            v_pm = result_normal['v_p'][-1]
+                            p_max = max(result_normal['p_m'])
 
                             # Базовые ограничения
                             base_conditions_met = (p_max <= 390000000.0 and v_pm >= 950 and x_pm >= 1.5 and x_pm < 7)
                             
                             if base_conditions_met:
-                                # Все условия выполнены - сохраняем решение
-                                x_e = x_e_func(result)
-                                Z_b1 = Z_b1_func(x_e, f_sum, omega_sum, delta, delta_sum, b_sum, k_sum, result)
+                                # ПЕРВАЯ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: -50°C
+                                opts['stop_conditions']['T_0'] = 223.15  # -50°C в Кельвинах
+                                result_cold = ozvb_termo(opts)
+                                v_pm_cold = result_cold['v_p'][-1]
                                 
-                                # Сохраняем успешное решение
-                                solution = {
-                                    'powder1': powder1,
-                                    'powder2': powder2,
-                                    'mass1': mass1,
-                                    'mass2': mass2,
-                                    'alpha': alpha,
-                                    'omega_sum': omega_sum,
-                                    'omega_q_ratio': omega_sum / q,
-                                    'delta': delta,
-                                    'W_0': W_0,
-                                    'Z_b1': Z_b1,
-                                    'velocity': v_pm,
-                                    'pressure_max': p_max,
-                                    'x_p': x_pm,
-                                    'x_e': x_e,
-                                    'f_sum': f_sum,
-                                    'delta_sum': delta_sum,
-                                    'b_sum': b_sum,
-                                    'k_sum': k_sum
-                                }
-                                successful_solutions.append(solution)
-                                
-                                # Обновляем описание прогресс-бара
-                                pbar.set_postfix({
-                                    'Смесь': f'{powder1}+{powder2}',
-                                    'Z_b1': f'{Z_b1:.2e}',
-                                    'V': f'{v_pm:.0f} м/с',
-                                    'P': f'{p_max/1e6:.0f} МПа'
-                                })
-                                
-                                print(f" ✓ УСПЕХ: {powder1} + {powder2}")
-                                print(f"   α={alpha:.2f}, ω={omega_sum:.2f}кг, ω/q={omega_sum/q:.2f}")
-                                print(f"   Z_b1={Z_b1:.2e} | V={v_pm:.1f}м/с | Pmax={p_max/1e6:.1f}МПа")
-                                
+                                if v_pm_cold >= 830:
+                                    # ВТОРАЯ ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: +50°C
+                                    opts['stop_conditions']['T_0'] = 323.15  # +50°C в Кельвинах
+                                    result_hot = ozvb_termo(opts)
+                                    p_mz_hot = result_hot['p_m'][-1]
+                                    
+                                    if p_mz_hot >= 180000000:  # 180 МПа в Па
+                                        # Все условия выполнены - сохраняем решение
+                                        x_e = x_e_func(result_normal)
+                                        Z_b1 = Z_b1_func(x_e, f_sum, omega_sum, delta, delta_sum, b_sum, k_sum, result_normal)
+                                        
+                                        # Сохраняем успешное решение
+                                        solution = {
+                                            'powder1': powder1,
+                                            'powder2': powder2,
+                                            'mass1': mass1,
+                                            'mass2': mass2,
+                                            'alpha': alpha,
+                                            'omega_sum': omega_sum,
+                                            'omega_q_ratio': omega_sum / q,
+                                            'delta': delta,
+                                            'W_0': W_0,
+                                            'Z_b1': Z_b1,
+                                            'velocity': v_pm,
+                                            'velocity_cold': v_pm_cold,
+                                            'velocity_hot': result_hot['v_p'][-1],
+                                            'pressure_max': p_max,
+                                            'pressure_hot': p_mz_hot,
+                                            'x_p': x_pm,
+                                            'x_e': x_e,
+                                            'f_sum': f_sum,
+                                            'delta_sum': delta_sum,
+                                            'b_sum': b_sum,
+                                            'k_sum': k_sum
+                                        }
+                                        successful_solutions.append(solution)
+                                        
+                                        # Сохраняем в файл
+                                        save_solution_to_file(solution)
+                                        
+                                        # Обновляем описание прогресс-бара
+                                        pbar.set_postfix({
+                                            'Смесь': f'{powder1}+{powder2}',
+                                            'Z_b1': f'{Z_b1:.2e}',
+                                            'V': f'{v_pm:.0f} м/с',
+                                            'V(-50)': f'{v_pm_cold:.0f} м/с',
+                                            'P(+50)': f'{p_mz_hot/1e6:.0f} МПа'
+                                        })
+                                        
+                                        print(f" ✓ УСПЕХ: {powder1} + {powder2}")
+                                        print(f"   α={alpha:.2f}, ω={omega_sum:.2f}кг, ω/q={omega_sum/q:.2f}")
+                                        print(f"   Z_b1={Z_b1:.2e} | V={v_pm:.1f}м/с | Pmax={p_max/1e6:.1f}МПа")
+                                        print(f"   V(-50°C)={v_pm_cold:.1f}м/с | P(+50°C)={p_mz_hot/1e6:.1f}МПа")
+                                    else:
+                                        # Не прошла проверка при +50°C
+                                        pbar.set_postfix({
+                                            'Смесь': f'{powder1[:5]}+{powder2[:5]}',
+                                            'Статус': '✗ +50°C',
+                                            'P(+50)': f'{p_mz_hot/1e6:.0f} МПа'
+                                        })
+                                else:
+                                    # Не прошла проверка при -50°C
+                                    pbar.set_postfix({
+                                        'Смесь': f'{powder1[:5]}+{powder2[:5]}',
+                                        'Статус': '✗ -50°C',
+                                        'V(-50)': f'{v_pm_cold:.0f} м/с'
+                                    })
                             else:
-                                # Обновляем описание прогресс-бара для неуспешных решений
+                                # Не прошла базовая проверка
                                 pbar.set_postfix({
                                     'Смесь': f'{powder1[:5]}+{powder2[:5]}',
                                     'V': f'{v_pm:.0f} м/с',
                                     'P': f'{p_max/1e6:.0f} МПа'
                                 })
-                                print(f" {powder1} + {powder2} | α={alpha:.2f} | V={v_pm:.1f}м/с | P={p_max/1e6:.1f}МПа")
+                                print(f" {powder1} + {powder2} | α={alpha:.2f} | V={v_pm:.1f}м/с | P={p_max/1e6:.1f}МПа| L={x_pm:.3f}м |")
                                 
                         except Exception as e:
                             print(f" Ошибка расчета для {powder1}+{powder2}: {e}")
@@ -156,6 +212,7 @@ def calculation_2(db, omega_sum_range, delta_range, alpha_range):
         print(f"НАЙДЕНО УСПЕШНЫХ РЕШЕНИЙ: {len(successful_solutions)}")
         print(f"Диапазон α: {alpha_range[0]:.1f}...{alpha_range[-1]:.1f}")
         print(f"Диапазон ω/q: {omega_sum_range[0]/q:.1f}...{omega_sum_range[-1]/q:.1f}")
+        print(f"Результаты сохранены в файл: result2.txt")
         print(f"{'='*60}")
         
         if successful_solutions:
@@ -167,6 +224,7 @@ def calculation_2(db, omega_sum_range, delta_range, alpha_range):
                 print(f"   α={sol['alpha']:.2f}, ω/q={sol['omega_q_ratio']:.2f}")
                 print(f"   Массы: {sol['mass1']:.2f} + {sol['mass2']:.2f} = {sol['omega_sum']:.2f} кг")
                 print(f"   V={sol['velocity']:.1f} м/с | Pmax={sol['pressure_max']/1e6:.1f} МПа")
+                print(f"   V(-50°C)={sol['velocity_cold']:.1f} м/с | P(+50°C)={sol['pressure_hot']/1e6:.1f} МПа")
                 print(f"   Z_b1={sol['Z_b1']:.2e}")
                 print()
         

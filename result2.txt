@@ -1,0 +1,1 @@
+powder1,powder2,mass1_kg,mass2_kg,alpha,omega_sum_kg,omega_q_ratio,delta_kg_m3,W0_m3,Z_b1,velocity_mps,velocity_cold_mps,velocity_hot_mps,pressure_max_mpa,pressure_hot_mpa,x_p_m,x_e_m,f_sum,delta_sum,b_sum,k_sum

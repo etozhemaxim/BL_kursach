@@ -717,6 +717,8 @@ E_m = \frac{qv_{pm}^2}{2},
 
 \( \zeta \) описывается уравнением (2.5)
 
+Стоит отметить, что нормировочная константа $K$ во всех расчётах будет приниматься $(10^{-40})^2$.
+
 \section{Расчёт смеси порохов}
 
 Так как одним из условий данной курсовой работы является учёт смесей порохов, то практический интерес вызывает ответ на вопрос о числе марок пороха в смеси. Какое количество порохов в ней будет оптимальным?
@@ -989,7 +991,17 @@ $\alpha_3$ & [0.05, 0.3] & 6 & Доли порохов (4 пороха) \\
 
 \section{Программная реализация}
 
-Методика решения обратной задачи изложена в пункте 2.3. Необходимо дополнить, что критерием отбора лучшего решения $Z_\text{B1}$, благодаря чему можно найти оптимальное решение. Далее для такого решения создаются графики распределения давления, скорости и положения снаряда в зависимости от времени. Блок-схема алгоритма решения ОЗВБ представлена на рисунке  \ref{fig:algo}.
+Методика решения обратной задачи изложена в пункте 2.3. Необходимо дополнить, что критерием отбора лучшего решения $Z_\text{B1}$, благодаря чему можно найти оптимальное решение. Далее для такого решения создаются графики распределения давления, скорости и положения снаряда в зависимости от времени. Блок-схема алгоритма решения ОЗВБ представлена на рисунке \ref{fig:algo}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{imgs/Complex.jpg}
+\caption{Блок-схема алгоритма}
+\label{fig:algo}
+\end{figure}
+
+На рисунке представлена схема взаимодейстия комплекса программ для решения ОЗВБ.
+
 
 \begin{figure}[H]
 \centering
@@ -998,7 +1010,295 @@ $\alpha_3$ & [0.05, 0.3] & 6 & Доли порохов (4 пороха) \\
 \label{fig:algo}
 \end{figure}
 
+
+
 \section{Результат решения ОЗВБ}
+
+Рассмотрим решение для одного пороха. Расчет проходил с использованием ГД постановки на больших, но точных диапазонах. Вводные данные представлены в таблице \ref{tab:ranges1}. Результаты расчёта представлены на рисунке \ref{fig:algo1} и в таблице \ref{tab:parameters1}.
+
+\begin{table}[H]
+\centering
+\caption{Диапазоны параметров (1 порох)}
+\label{tab:ranges1}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.35\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|>{\centering\arraybackslash}p{0.1\textwidth}|>{\centering\arraybackslash}p{0.3\textwidth}|}
+\hline
+\textbf{Параметр} & \textbf{Диапазон} & \textbf{Точек} & \textbf{Описание} \\
+\hline
+$\omega_{\Sigma }$ & [1.0, 10.0] & 15 & Суммарная масса заряда, кг \\
+\hline
+$\Delta$ & [440, 1400] & 40 & Плотность заряжания, кг/м\textsuperscript{3} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{imgs/OZVB_-1.png}
+\caption{Зависимость максимального давления от длины ствола}
+\label{fig:algo1}
+\end{figure}
+
+
+\begin{table}[H]
+\centering
+\caption{Параметры баллистического расчета}
+\label{tab:parameters1}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.4\textwidth}|>{\centering\arraybackslash}p{0.2\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|}
+\hline
+\textbf{Описание} & \textbf{Значение} & \textbf{Ед.} \\
+\hline
+Наименование смеси & С 40/1.0 & - \\
+\hline
+Суммарная масса заряда, $\omega_\Sigma$ & 8.071 & кг \\
+\hline
+$\omega / q$ & 1.614 & - \\
+\hline
+Плотность заряжания, $\varDelta $ & 464.6 & кг/м³ \\
+\hline
+Начальный объем, $W_0$ & 0.017372 & м³ \\
+\hline
+$Z_{b1}$ & 1.639e+09 & - \\
+\hline
+Скорость снаряда, $V_{pm}$ & 950.00 & м/с \\
+\hline
+Длина ствола, $l$ & 3.562 & м \\
+\hline
+Максимальное давление, $p_{max}$ & 211.37 & МПа \\
+\hline
+\end{tabular}
+\end{table}
+
+Рассмотрим расчёт смеси порохов. В первом приближении задача решалась с помощью термодинамической постановки на больших диапазонах. Рассматривались все 40 порохов из Приложения 1. Вводные данные представлены в таблице \ref{tab:ranges2}. Результаты расчёта представлены на рисунке \ref{fig:algo2} и в таблице \ref{tab:parameters2}.
+
+\begin{table}[H]
+\centering
+\caption{Диапазоны параметров (1-е приближение)}
+\label{tab:ranges2}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.35\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|>{\centering\arraybackslash}p{0.1\textwidth}|>{\centering\arraybackslash}p{0.3\textwidth}|}
+\hline
+\textbf{Параметр} & \textbf{Диапазон} & \textbf{Точек} & \textbf{Описание} \\
+\hline
+$\omega_{\Sigma }$ & [1.0, 9.0] & 5 & Суммарная масса заряда, кг \\
+\hline
+$\Delta$ & [440, 700] & 5 & Плотность заряжания, кг/м\textsuperscript{3} \\
+\hline
+$\alpha$ & [0.1, 0.9] & 9 & Доля первого пороха \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{imgs/OZVB_1.png}
+\caption{Зависимость максимального давления от длины ствола}
+\label{fig:algo2}
+\end{figure}
+
+
+\begin{table}[H]
+\centering
+\caption{Параметры баллистического расчета}
+\label{tab:parameters2}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.4\textwidth}|>{\centering\arraybackslash}p{0.2\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|}
+\hline
+\textbf{Описание} & \textbf{Значение} & \textbf{Ед.} \\
+\hline
+Наименование смеси & С 3/0.3 67/0.7 & - \\
+\hline
+Доля пороха 1-го пороха, $\alpha$ & 0.300 & - \\
+\hline
+Суммарная масса заряда, $\omega_\Sigma$ & 3.000 & кг \\
+\hline
+$\omega / q$ & 0.600 & - \\
+\hline
+Плотность заряжания, $\varDelta $ & 635.0 & кг/м³ \\
+\hline
+Начальный объем, $W_0$ & 0.004724 & м³ \\
+\hline
+$Z_{b1}$ & 8.058e+12 & - \\
+\hline
+Скорость снаряда, $V_{pm}$ & 950.00 & м/с \\
+\hline
+Длина ствола, $l$ & 3.815 & м \\
+\hline
+Максимальное давление, $p_{max}$ & 338.67 & МПа \\
+\hline
+\end{tabular}
+\end{table}
+
+
+Во втором приближении сдвинем вправо диапазоны. Вводные данные представлены в таблице \ref{tab:ranges3}. Результаты расчёта представлены на рисунке \ref{fig:algo3} и в таблице \ref{tab:parameters3}.
+
+\begin{table}[H]
+\centering
+\caption{Диапазоны параметров (2-e приближение)}
+\label{tab:ranges3}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.35\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|>{\centering\arraybackslash}p{0.1\textwidth}|>{\centering\arraybackslash}p{0.3\textwidth}|}
+\hline
+\textbf{Параметр} & \textbf{Диапазон} & \textbf{Точек} & \textbf{Описание} \\
+\hline
+$\omega_{\Sigma }$ & [1.0, 9.0] & 5 & Суммарная масса заряда, кг \\
+\hline
+$\Delta$ & [600,1200] & 5 & Плотность заряжания, кг/м\textsuperscript{3} \\
+\hline
+$\alpha$ & [0.1, 0.9] & 9 & Доля первого пороха \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{imgs/OZVB_2.png}
+\caption{Зависимость максимального давления от длины ствола}
+\label{fig:algo3}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Параметры баллистического расчета (2-е приближение)}
+\label{tab:parameters3}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.4\textwidth}|>{\centering\arraybackslash}p{0.2\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|}
+\hline
+\textbf{Описание} & \textbf{Значение} & \textbf{Ед.} \\
+\hline
+Наименование смеси & С 3/0.5 38/0.5 & - \\
+\hline
+Доля пороха 1-го пороха, $\alpha$ & 0.500 & - \\
+\hline
+Суммарная масса заряда, $\omega_\Sigma$& 4.000 & кг \\
+\hline
+$\omega / q$ & 0.800 & - \\
+\hline
+Плотность заряжания, $\varDelta $& 900.0 & кг/м³ \\
+\hline
+Начальный объем, $W_0$ & 0.004444 & м³ \\
+\hline
+$Z_{b1}$ & 1.163e+13 & - \\
+\hline
+Скорость снаряда, $V_{pm}$ & 950.00 & м/с \\
+\hline
+Длина ствола, $l$ & 2.868 & м \\
+\hline
+Максимальное давление, $p_{max}$ & 265.69 & МПа \\
+\hline
+\end{tabular}
+\end{table}
+
+Ниже представлены уточнённые вводные данные. Расчёт будет происходить в ГД постановке. Вводные данные представлены в таблице \ref{tab:ranges4}. Результаты расчёта представлены на рисунке \ref{fig:algo4} и в таблице \ref{tab:parameters4}.
+
+\begin{table}[H]
+\centering
+\caption{Диапазоны параметров (3-е приближение)}
+\label{tab:ranges4}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.35\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|>{\centering\arraybackslash}p{0.1\textwidth}|>{\centering\arraybackslash}p{0.3\textwidth}|}
+\hline
+\textbf{Параметр} & \textbf{Диапазон} & \textbf{Точек} & \textbf{Описание} \\
+\hline
+$\omega_{\Sigma }$ & [1.0, 10.0] & 15 & Суммарная масса заряда, кг \\
+\hline
+$\Delta$ & [700, 1000] & 10 & Плотность заряжания, кг/м\textsuperscript{3} \\
+\hline
+$\alpha$ & [0.1, 0.9] & 10 & Доля первого пороха \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Параметры баллистического расчета (3-е приближение)}
+\label{tab:parameters4}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.4\textwidth}|>{\centering\arraybackslash}p{0.2\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|}
+\hline
+\textbf{Описание} & \textbf{Значение} & \textbf{Ед.} \\
+\hline
+Наименование смеси & С 21/0.5 37/0.5 & - \\
+\hline
+Доля пороха 1-го пороха, $\alpha$ & 0.544 & - \\
+\hline
+Суммарная масса заряда, $\omega_\Sigma$ & 3.571 & кг \\
+\hline
+$\omega / q$ & 0.714 & - \\
+\hline
+Плотность заряжания, $\varDelta $ & 900.0 & кг/м³ \\
+\hline
+Начальный объем, $W_0$ & 0.003968 & м³ \\
+\hline
+$Z_{b1}$ & 1.832e+16 & - \\
+\hline
+Скорость снаряда, $V_{pm}$ & 950.00 & м/с \\
+\hline
+Длина ствола, $l$ & 3.846 & м \\
+\hline
+Максимальное давление, $p_{max}$ & 259.01 & МПа \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{imgs/OZVB_3.png}
+\caption{Зависимость максимального давления от длины ствола (ГД постановка)}
+\label{fig:algo4}
+\end{figure}
+
+Расссмотри финальное, четвёртое приближение. Вводные данные представлены в таблице \ref{tab:ranges5}. Результаты расчёта представлены на рисунке \ref{tab:parameters5} и в таблице \ref{tab:parameters5}.
+
+\begin{table}[H]
+\centering
+\caption{Диапазоны параметров (финальное приближение)}
+\label{tab:ranges5}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.35\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|>{\centering\arraybackslash}p{0.1\textwidth}|>{\centering\arraybackslash}p{0.3\textwidth}|}
+\hline
+\textbf{Параметр} & \textbf{Диапазон} & \textbf{Точек} & \textbf{Описание} \\
+\hline
+$\omega_{\Sigma }$ & [1.0, 10.0] & 15 & Суммарная масса заряда, кг \\
+\hline
+$\Delta$ & [800, 1000] & 20 & Плотность заряжания, кг/м\textsuperscript{3} \\
+\hline
+$\alpha$ & [0.1, 0.9] & 20 & Доля первого пороха \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Параметры баллистического расчета (финальное приближение)}
+\label{tab:parameters5}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.4\textwidth}|>{\centering\arraybackslash}p{0.2\textwidth}|>{\centering\arraybackslash}p{0.15\textwidth}|}
+\hline
+\textbf{Описание} & \textbf{Значение} & \textbf{Ед.} \\
+\hline
+Наименование смеси & С 16/0.6 31/0.4 & - \\
+\hline
+Доля пороха 1-го пороха, $\alpha$ & 0.563 & - \\
+\hline
+Суммарная масса заряда, $\omega_\Sigma$ & 4.857 & кг \\
+\hline
+$\omega / q$ & 0.971 & - \\
+\hline
+Плотность заряжания, $\varDelta $ & 968.4 & кг/м³ \\
+\hline
+Начальный объем, $W_0$ & 0.005016 & м³ \\
+\hline
+$Z_{b1}$ & 1.020e+20 & - \\
+\hline
+Скорость снаряда, $V_{pm}$ & 950.00 & м/с \\
+\hline
+Длина ствола, $l$ & 3.732 & м \\
+\hline
+Максимальное давление, $p_{max}$ & 267.40 & МПа \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{imgs/OZVB_4.png}
+\caption{Зависимость максимального давления от длины ствола (ГД постановка)}
+\label{fig:algo5}
+\end{figure}
+
+Таким образом, лучшей смесью стала совокупность пороха ДГ-2 17/1 (60\%) и 12/1 УГ (40\%).
 
 
 \chapter*{Приложение 1}
@@ -1010,25 +1310,25 @@ $\alpha_3$ & [0.05, 0.3] & 6 & Доли порохов (4 пороха) \\
 \hline
 \textbf{№} & \textbf{Порох} & \textbf{№} & \textbf{Порох} & \textbf{№} & \textbf{Порох} & \textbf{№} & \textbf{Порох} \\
 \hline
-1 & 4/1 фл & 11 & ДРП & 21 & НДТ-3 16/1 & 31 & 12/1 тр БП \\
+1 & ДГ-4 14/1 & 11 & УГ-1 & 21 & 12/1 тр МН & 31 & 12/1 УГ \\
 \hline
-2 & 5/1 & 12 & ВТ & 22 & ДГ-2 15/1 & 32 & 18/1 тр \\
+2 & ДГ-3 13/1 & 12 & ДГ-3 17/1 & 22 & 7/1 УГ & 32 & 18/1 тр БП \\
 \hline
-3 & 7/1 УГ & 13 & ДГ-4 13/1 & 23 & УГФ-1 & 33 & 16/1 тр \\
+3 & ДГ-4 15/1 & 13 & НДТ-2 16/1 & 23 & 15/1 тр В/А & 33 & 9/7 МН \\
 \hline
-4 & 37/1 тр & 14 & ДГ-4 15/1 & 24 & УГ-1 & 34 & 22/1 тр \\
+4 & АПЦ-235 П 16/1 & 14 & НДТ-3 18/1 & 24 & 8/1 УГ & 34 & 12/7 \\
 \hline
-5 & 8/1 УГ & 15 & НДТ-3 19/1 & 25 & ДГ-3 17/1 & 35 & 11/1 УГ \\
+5 & ДГ-3 14/1 & 15 & ДГ-3 18/1 & 25 & 16/1 тр В/А & 35 & 14/7 В/А \\
 \hline
-6 & 4/7 & 16 & ДГ-4 14/1 & 26 & НДТ-2 16/1 & 36 & 12/1 УГ \\
+6 & МАП-1 23/1 & 16 & ДГ-2 17/1 & 26 & 11/1 БП & 36 & 15/7 \\
 \hline
-7 & 5/7 н/а & 17 & ДГ-3 13/1 & 27 & НДТ-3 18/1 & 37 & 18/1 тр БП \\
+7 & БНГ-1355 25/1 & 17 & НДТ-3 19/1 & 27 & 12/1 тр БП & 37 & 9/7 БП \\
 \hline
-8 & 14/7 & 18 & АПЦ-235 П 16/1 & 28 & ДГ-3 18/1 & 38 & 9/7 МН \\
+8 & НДТ-3 16/1 & 18 & ДГ-3 20/1 & 28 & 18/1 тр & 38 & 14/7 \\
 \hline
-9 & 17/7 & 19 & ДГ-3 14/1 & 29 & ДГ-2 17/1 & 39 & 12/7 \\
+9 & ДГ-2 15/1 & 19 & НДТ-2 19/1 & 29 & 16/1 тр & 39 & 17/7 \\
 \hline
-10 & 22/7 & 20 & МАП-1 23/1 & 30 & ДГ-3 20/1 & 40 & 14/7 В/А \\
+10 & УГФ-1 & 20 & 12/1 тр МН & 30 & 22/1 тр & 40 & 14/7 БП \\
 \hline
 \end{tabular}
 \end{table}

@@ -12,6 +12,7 @@ p_0 = opts['init_conditions']['p_0'] = 30000000.0
 opts['stop_conditions']['v_p'] = 950
 opts['stop_conditions']['p_max'] = 390000000.0
 opts['stop_conditions']['x_p'] = 5.625
+opts['init_conditions']['T_0'] = 323.15
 
 opts['init_conditions']['W_0'] = 0.005016
 
@@ -104,7 +105,7 @@ x_projectile = np.array([layer['x'][-1] for layer in result['layers']])
 max_time = max(times) * 1000
 host.set_xlim(0, max_time * 1.05)
 
-plim = (0, 300)
+plim = (0, 400)
 vlim = (0, 1000)
 xlim = (0, 10)
 

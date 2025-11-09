@@ -8,13 +8,13 @@ from multiprocessing import Pool, cpu_count
 import time
 
 # Параметры для варьирования
-omega_sum_range = np.linspace(1, 10, 15)  # общая масса пороха в кг
-delta_range = np.linspace(440, 1400, 40)   # плотность заряжания
-alpha_range = np.linspace(0.1, 0.9, 9)    # доля первого пороха (0.1-0.9)
+omega_sum_range = np.linspace(5.3, 5.6, 50)  # общая масса пороха в кг
+delta_range = np.linspace(500, 600, 150)   # плотность заряжания
+alpha_range = np.linspace(0.4, 0.6, 50)    # доля первого пороха (0.1-0.9)
 
 class Powders:
     def __init__(self):
-        self.powders = ['ДГ-4 14/1', 'ДГ-3 13/1', 'ДГ-4 15/1', 'АПЦ-235 П 16/1', 'ДГ-3 14/1', 'МАП-1 23/1', 'БНГ-1355 25/1', 'НДТ-3 16/1', 'ДГ-2 15/1', 'УГФ-1', 'УГ-1', 'ДГ-3 17/1', 'НДТ-2 16/1', 'НДТ-3 18/1', 'ДГ-3 18/1', 'ДГ-2 17/1', 'НДТ-3 19/1', 'ДГ-3 20/1', 'НДТ-2 19/1', '12/1 тр МН', '7/1 УГ', '15/1 тр В/А', '8/1 УГ', '16/1 тр В/А', '11/1 БП', '12/1 тр БП', '18/1 тр', '16/1 тр', '22/1 тр', '11/1 УГ', '12/1 УГ', '18/1 тр БП', '9/7 МН', '12/7', '14/7 В/А', '15/7', '9/7 БП', '14/7', '17/7', '14/7 БП']
+        self.powders = [ '7/1 УГ','14/7 В/А']
     
     def get_powder_index(self, powder_name):
         """Получает индекс пороха в списке (начиная с 1)"""
@@ -64,10 +64,10 @@ def generate_mixture_name(powder1, powder2, alpha, omega_sum, powders_db):
     name_parts = ["С"]  # "С" означает смесь
     
     # Добавляем информацию о первом порохе и его доле
-    name_parts.append(f"{powder1_idx}/{alpha:.1f}")
+    name_parts.append(f"{powder1_idx}/{alpha:.3f}")
     
     # Добавляем информацию о втором порохе и его доле
-    name_parts.append(f"{powder2_idx}/{(1-alpha):.1f}")
+    name_parts.append(f"{powder2_idx}/{(1-alpha):.3f}")
     
     # Добавляем общую массу (округляем до 1 знака)
     name_parts.append(str(round(omega_sum, 1)))
@@ -138,14 +138,14 @@ def run_simulation_lagrange(params):
         
         # Проверяем базовые условия
         q = base_opts_copy['init_conditions']['q']
-        if omega_sum / q < 0.1 or omega_sum / q > 1.5:
+        if omega_sum / q < 0.05 or omega_sum / q > 2:
             return None
             
         W_0 = omega_sum / delta
         if W_0 <= 0:
             return None
             
-        if alpha < 0.1 or alpha > 0.9:
+        if alpha < 0.1 or alpha > 2:
             return None
 
         # Получаем данные порохов
@@ -202,14 +202,18 @@ def run_simulation_lagrange(params):
                 opts_cold = copy.deepcopy(opts)
                 opts_cold['init_conditions']['T_0'] = 223.15
                 opts_cold['stop_conditions']['v_p'] = 830
+                opts_cold['stop_conditions']['x_p'] = x_pm
+                opts_cold['stop_conditions']['p_max'] = 390000000.0
                 result_cold = ozvb_lagrange(opts_cold)
                 last_layer_cold = result_cold['layers'][-1]
                 v_muzzle_cold = last_layer_cold['u'][-1]
                 
-                if v_muzzle_cold >= 800:
+                if v_muzzle_cold >= 830:
                     # Проверка при +50°C
                     opts_hot = copy.deepcopy(opts)
                     opts_hot['init_conditions']['T_0'] = 323.15
+                    opts_hot['stop_conditions']['x_p'] = x_pm
+                    opts_cold['stop_conditions']['p_max'] = 390000000.0         
                     result_hot = ozvb_lagrange(opts_hot)
                     last_layer_hot = result_hot['layers'][-1]
                     p_mz_hot = last_layer_hot['p'][-1]  # давление в дульном срезе
@@ -261,12 +265,12 @@ def process_results(result, successful_solutions, pbar):
         successful_solutions.append(result)
         save_solution_to_file(result, "result_lagrange.txt")
         
-        print(f"    УСПЕХ ГД!!!!!!!!: {result['mixture_name']}")
-        print(f"   Состав: {result['powder1']} + {result['powder2']}")
-        print(f"   α={result['alpha']:.2f}, ω={result['omega_sum']:.2f}кг, ω/q={result['omega_q_ratio']:.2f}")
-        print(f"   Z_b1={result['Z_b1']} | V_дульн={result['velocity']:.1f}м/с | Pmax={result['pressure_max']/1e6:.1f}МПа")
-        print(f"   V(-50°C)={result['velocity_cold']:.1f}м/с | P(+50°C)={result['pressure_hot']/1e6:.1f}МПа")
-        print(f"   Длина ствола: {result['barrel_length']:.3f} м")
+        # print(f"    УСПЕХ ГД!!!!!!!!: {result['mixture_name']}")
+        # print(f"   Состав: {result['powder1']} + {result['powder2']}")
+        # print(f"   α={result['alpha']:.2f}, ω={result['omega_sum']:.2f}кг, ω/q={result['omega_q_ratio']:.2f}")
+        # print(f"   Z_b1={result['Z_b1']} | V_дульн={result['velocity']:.1f}м/с | Pmax={result['pressure_max']/1e6:.1f}МПа")
+        # print(f"   V(-50°C)={result['velocity_cold']:.1f}м/с | P(+50°C)={result['pressure_hot']/1e6:.1f}МПа")
+        # print(f"   Длина ствола: {result['barrel_length']:.3f} м")
 
 def calculation_2_lagrange_multiprocess(db, omega_sum_range, delta_range, alpha_range):
     """Многопроцессорная версия ГД расчета"""
@@ -315,22 +319,22 @@ def calculation_2_lagrange_multiprocess(db, omega_sum_range, delta_range, alpha_
     print(f"\nГД расчет завершен за {elapsed:.2f} секунд")
     print(f"\n{'='*60}")
     print(f"НАЙДЕНО УСПЕШНЫХ РЕШЕНИЙ ГД: {len(successful_solutions_list)}")
-    print(f"{'='*60}")
+    print(f"{'='*60}") 
     
-    if successful_solutions_list:
-        successful_solutions_list.sort(key=lambda x: x['Z_b1'])
+    # if successful_solutions_list:
+    #     successful_solutions_list.sort(key=lambda x: x['Z_b1'])
         
-        print("\nЛучшие ГД решения:")
-        for i, sol in enumerate(successful_solutions_list[:10]):
-            print(f"{i+1}. {sol['mixture_name']}")
-            print(f"   Состав: {sol['powder1']} + {sol['powder2']}")
-            print(f"   α={sol['alpha']:.2f}, ω/q={sol['omega_q_ratio']:.2f}")
-            print(f"   Массы: {sol['mass1']:.2f} + {sol['mass2']:.2f} = {sol['omega_sum']:.2f} кг")
-            print(f"   V_дульн={sol['velocity']:.1f} м/с | Pmax={sol['pressure_max']/1e6:.1f} МПа")
-            print(f"   V(-50°C)={sol['velocity_cold']:.1f} м/с | P(+50°C)={sol['pressure_hot']/1e6:.1f} МПа")
-            print(f"   Z_b1={sol['Z_b1']:.2e}")
-            print(f"   Длина ствола: {sol['barrel_length']:.3f} м")
-            print()
+    #     print("\nЛучшие ГД решения:")
+    #     for i, sol in enumerate(successful_solutions_list[:10]):
+    #         print(f"{i+1}. {sol['mixture_name']}")
+    #         print(f"   Состав: {sol['powder1']} + {sol['powder2']}")
+    #         print(f"   α={sol['alpha']:.2f}, ω/q={sol['omega_q_ratio']:.2f}")
+    #         print(f"   Массы: {sol['mass1']:.2f} + {sol['mass2']:.2f} = {sol['omega_sum']:.2f} кг")
+    #         print(f"   V_дульн={sol['velocity']:.1f} м/с | Pmax={sol['pressure_max']/1e6:.1f} МПа")
+    #         print(f"   V(-50°C)={sol['velocity_cold']:.1f} м/с | P(+50°C)={sol['pressure_hot']/1e6:.1f} МПа")
+    #         print(f"   Z_b1={sol['Z_b1']:.2e}")
+    #         print(f"   Длина ствола: {sol['barrel_length']:.3f} м")
+    #         print()
     
     return successful_solutions_list
 
@@ -738,6 +742,7 @@ def Z_b1_func(x_e, f_sum, omega_sum, vardelta, delta, b, k, result):
     p_ign = 5e6
     omega_ign = 0.01
     K = (1e-40)**2
+    q = 5
     v_p = result['v_p'][-1]
     x_p = result['x_p'][-1]
 
@@ -757,9 +762,9 @@ def Z_b1_func(x_e, f_sum, omega_sum, vardelta, delta, b, k, result):
 
     Lamda_m = (1 - b * vardelta * (1 + zeta) + Lambda_e) * ((1 + zeta + eta_re) / (1 + zeta - eta_rm))**(1 /(k-1)) - (1 - b * vardelta * (1 + zeta))
 
-    N_s = K * (1 + Lamda_m) * (base_opts['init_conditions']['q'] / omega_sum)
+    N_s = K * (1 + Lamda_m) * (q / omega_sum)
 
-    Z_b1 = (base_opts['init_conditions']['q'] * v_p**2 / 2)**5 * (np.sqrt(N_s) / omega_sum * x_p**4) 
+    Z_b1 = (q * v_p**2 / 2)**5 * (np.sqrt(N_s) / omega_sum * x_p**4) 
 
     return Z_b1, Pi, phi, E_m, eta_rm, eta_re, Lambda_e, zeta, Lamda_m, N_s, (1 - b * vardelta * (1 + zeta) + Lambda_e), ((1 + zeta + eta_re) / (1 + zeta - eta_rm))**(1 / (k - 1)), (1 - b * vardelta * (1 + zeta))
 
@@ -796,23 +801,23 @@ def Z_b1_func_lagrange(x_e, f_sum, omega_sum, vardelta, delta, b, k, result):
     p_ign = 5e6
     omega_ign = 0.01
     K = (1e-40)**2
-    
+    q = 5
     # Берем данные из последнего временного слоя ГД модели
     last_layer = result['layers'][-1]
     v_p = last_layer['u'][-1]  # дульная скорость
     x_p = last_layer['x'][-1]  # длина ствола
 
     Pi = f_sum / (k - 1) 
-    phi = phi_1 + (1 / (3 * base_opts['init_conditions']['q'])) * (omega_ign + omega_sum)   
-    E_m = (base_opts['init_conditions']['q'] * v_p**2) / 2 
+    phi = phi_1 + (1 / (3 * q)) * (omega_ign + omega_sum)   
+    E_m = (q* v_p**2) / 2 
     eta_rm = phi * E_m / Pi    
     eta_re = E_m / x_p
     Lambda_e = x_e / x_p
 
     zeta = (p_ign / f_sum) * ((1 / vardelta) - (1 / delta)) * (1 / (1 + ((b * p_ign) / f_sum)))
     Lamda_m = (1 - b * vardelta * (1 + zeta) + Lambda_e) * ((1 + zeta + eta_re) / (1 + zeta - eta_rm))**(1 /(k-1)) - (1 - b * vardelta * (1 + zeta))
-    N_s = K * (1 + Lamda_m) * (base_opts['init_conditions']['q'] / omega_sum)
-    Z_b1 = (base_opts['init_conditions']['q'] * v_p**2 / 2)**5 * (np.sqrt(N_s) / omega_sum * x_p**4) 
+    N_s = K * (1 + Lamda_m) * (q / omega_sum)
+    Z_b1 = (q * v_p**2 / 2)**5 * (np.sqrt(N_s) / omega_sum * x_p**4) 
 
     return Z_b1, Pi, phi, E_m, eta_rm, eta_re, Lambda_e, zeta, Lamda_m, N_s, (1 - b * vardelta * (1 + zeta) + Lambda_e), ((1 + zeta + eta_re) / (1 + zeta - eta_rm))**(1 / (k - 1)), (1 - b * vardelta * (1 + zeta))
 
@@ -829,11 +834,11 @@ if __name__ == "__main__":
     # print("\n=== РАСЧЕТ ОДНОГО ПОРОХА (ТД) ===")
     # solutions_single = calculation_single_powder_multiprocess(db, omega_sum_range, delta_range)
     
-    # Расчет одного пороха (газодинамика)
-    print("\n=== РАСЧЕТ ОДНОГО ПОРОХА (ГД) ===")
-    solutions_single_lagrange = calculation_single_powder_lagrange_multiprocess(db, omega_sum_range, delta_range)
+    # # Расчет одного пороха (газодинамика)
+    # print("\n=== РАСЧЕТ ОДНОГО ПОРОХА (ГД) ===")
+    # solutions_single_lagrange = calculation_single_powder_lagrange_multiprocess(db, omega_sum_range, delta_range)
     
-    # # Расчет смесей из 2 порохов (газодинамика)
-    # print("\n=== РАСЧЕТ СМЕСЕЙ ИЗ 2 ПОРОХОВ (ГД) ===")
-    # solutions_lagrange = calculation_2_lagrange_multiprocess(db, omega_sum_range, delta_range, alpha_range)
+    # Расчет смесей из 2 порохов (газодинамика)
+    print("\n=== РАСЧЕТ СМЕСЕЙ ИЗ 2 ПОРОХОВ (ГД) ===")
+    solutions_lagrange = calculation_2_lagrange_multiprocess(db, omega_sum_range, delta_range, alpha_range)
 

@@ -3,10 +3,9 @@ import numpy as np
 from tqdm import tqdm
 import itertools
 
-# Параметры для варьирования
-omega_sum_range = np.linspace(1, 5, 20)  # общая масса пороха в кг
-delta_range = np.linspace(700, 1000, 10)   # плотность заряжания
-alpha_range = np.linspace(0.1, 0.9, 10)    # доля первого пороха (0.1-0.9)
+omega_sum_range = np.linspace(4.7, 5, 100)  # общая масса пороха в кг
+delta_range = np.linspace(970, 1000, 40)   # плотность заряжания
+alpha_range = np.linspace(0.5, 0.7, 30)    # доля первого пороха (0.1-0.9)
 
 
 class Powders:
@@ -26,7 +25,7 @@ def get_powder_data(powder_name):
 powders_DB = Powders()
 
 available_powders = []
-for p in powders_DB.powders[5:10]:
+for p in powders_DB.powders[:]:
     powder_data = get_powder_data(p)
     if powder_data is not None:
         available_powders.append(p)
@@ -163,7 +162,7 @@ def calculation_2(db, omega_sum_range, delta_range, alpha_range):
                                     result_hot = ozvb_termo(opts)
                                     p_mz_hot = result_hot['p_m'][-1]
                                     
-                                    if p_mz_hot >= 170000000: 
+                                    if p_mz_hot <= 180000000: 
 
                                         solution = {
                                             'powder1': powder1,
@@ -296,7 +295,7 @@ def calculation_2_lagrange(db, omega_sum_range, delta_range, alpha_range):
                 
             for omega_sum in omega_sum_range:
 
-                if omega_sum / q < 0.1 or omega_sum / q > 0.8:
+                if omega_sum / q < 0.1 or omega_sum / q > 2:
                     pbar.update(len(delta_range) * len(alpha_range))
                     continue
                     
@@ -733,11 +732,10 @@ def calculation_single_powder_lagrange(db, omega_sum_range, delta_range):
     return successful_solutions
 
 
-# Пример использования:
-# solutions_single = calculation_single_powder(db, omega_sum_range, delta_range)
-solutions_single_lagrange = calculation_single_powder_lagrange(db, omega_sum_range, delta_range)
+# # Пример использования:
+# # solutions_single = calculation_single_powder(db, omega_sum_range, delta_range)
+# solutions_single_lagrange = calculation_single_powder_lagrange(db, omega_sum_range, delta_range)
 
-# Запуск ГД расчета
-# solutions_lagrange = calculation_2_lagrange(db, omega_sum_range, delta_range, alpha_range)
+solutions_lagrange = calculation_2_lagrange(db, omega_sum_range, delta_range, alpha_range)
 
 # solutions = calculation_2(db, omega_sum_range, delta_range, alpha_range)

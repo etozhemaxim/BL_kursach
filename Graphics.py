@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib.colors import LogNorm
 
 # Загрузка данных
-df = pd.read_csv('result_lagrange2.txt')
+df = pd.read_csv('result_lagrange.txt')
 
 # Проверка загрузки данных
 print("Первые 5 строк данных:")
@@ -88,8 +88,7 @@ scatter2 = plt.scatter(df['omega_q_ratio'],
                       alpha=0.8,
                       s=60,
                       edgecolors='white',
-                      linewidth=0.3,
-                      label='Все решения')
+                      linewidth=0.3)
 
 # Пометка лучшего решения на втором графике
 plt.scatter(best_solution['omega_q_ratio'], 
@@ -99,30 +98,33 @@ plt.scatter(best_solution['omega_q_ratio'],
            s=400,
            edgecolors='black',
            linewidth=1.5,
-           label=f'Лучшее решение (Z_b1 = {best_solution["Z_b1"]:.2e})')
+           label=f'Лучшее решение ')
 
-# Аннотация для лучшего решения на втором графике
-plt.annotate(f'Лучшее: Z_b1 = {best_solution["Z_b1"]:.2e}\n'
-            f'δ = {best_solution["delta_kg_m3"]:.1f} кг/м³\n'
-            f'ω_q = {best_solution["omega_q_ratio"]:.3f}',
-            xy=(best_solution['omega_q_ratio'], best_solution['delta_kg_m3']),
-            xytext=(15, 15),
-            textcoords='offset points',
-            bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.8),
-            fontsize=10,
-            fontweight='bold')
+# # Аннотация для лучшего решения на втором графике
+# plt.annotate(f'Лучшее: Z_b1 = {best_solution["Z_b1"]:.2e}\n'
+#             f'δ = {best_solution["delta_kg_m3"]:.1f} кг/м³\n'
+#             f'ω_q = {best_solution["omega_q_ratio"]:.3f}',
+#             xy=(best_solution['omega_q_ratio'], best_solution['delta_kg_m3']),
+#             xytext=(15, 15),
+#             textcoords='offset points',
+#             bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.8),
+#             fontsize=10,
+#             fontweight='bold')
+
+plt.rcParams['text.usetex'] = False  # Обычно лучше оставить False
+plt.rcParams['mathtext.fontset'] = 'stix'  # или 'cm', 'dejavusans'
 
 # Настройки второго графика
-plt.xlabel('Omega_q_ratio', fontsize=14, fontweight='bold')
-plt.ylabel('Плотность заряжания, delta_kg_m3 (кг/м³)', fontsize=14, fontweight='bold')
-plt.title('Зависимость плотности заряжания от Omega_q_ratio\n(Цветовая схема по критерию Слухоцкого Z_b1)', 
+plt.xlabel(r'$\omega / q$', fontsize=14, fontweight='bold')
+plt.ylabel(r'$\Delta$, кг/м$^3$', fontsize=14, fontweight='bold')
+plt.title('', 
          fontsize=16, fontweight='bold')
 plt.grid(True, alpha=0.3, linestyle='--')
 plt.legend(loc='upper left', fontsize=12)
 
 # Цветовая шкала для второго графика
 cbar2 = plt.colorbar(scatter2, location='right', shrink=0.8)
-cbar2.set_label('Критерий Слухоцкого Z_b1 (лог. шкала)', fontsize=12, fontweight='bold')
+cbar2.set_label('Критерий Слухоцкого ', fontsize=12, fontweight='bold')
 
 # Улучшение внешнего вида
 plt.gca().set_facecolor('#f8f9fa')
@@ -130,6 +132,49 @@ plt.tight_layout()
 
 # Показать второй график
 plt.show()
+
+# # ГРАФИК 3: Зависимость критерия Слухоцкого от длины ствола с цветом по давлению
+# plt.figure(figsize=(14, 8))
+
+# scatter3 = plt.scatter(df['x_p_m'], 
+#                       df['Z_b1'], 
+#                       c=df['pressure_max_mpa'], 
+#                       cmap='plasma', 
+#                       norm=LogNorm(vmin=df['pressure_max_mpa'].min(), vmax=df['pressure_max_mpa'].max()),
+#                       alpha=0.8,
+#                       s=60,
+#                       edgecolors='white',
+#                       linewidth=0.3)
+
+# # Пометка лучшего решения на третьем графике
+# plt.scatter(best_solution['x_p_m'], 
+#            best_solution['Z_b1'], 
+#            color='red', 
+#            marker='*', 
+#            s=400,
+#            edgecolors='black',
+#            linewidth=1.5,
+#            label=f'Лучшее решение ')
+
+# # Настройки третьего графика
+# plt.xlabel('Длина ствола, м', fontsize=14, fontweight='bold')
+# plt.ylabel('Критерий Слухоцкого', fontsize=14, fontweight='bold')
+# plt.title('', 
+#          fontsize=16, fontweight='bold')
+# plt.grid(True, alpha=0.3, linestyle='--')
+# plt.legend(loc='upper left', fontsize=12)
+
+# # Цветовая шкала для третьего графика
+# cbar3 = plt.colorbar(scatter3, location='right', shrink=0.8)
+# cbar3.set_label('Максимальное давление, МПа', fontsize=12, fontweight='bold')
+
+# # Улучшение внешнего вида
+# plt.gca().set_facecolor('#f8f9fa')
+# plt.tight_layout()
+
+# # Показать третий график
+# plt.show()
+
 
 # Дополнительная статистика
 print(f"\nСтатистика по данным:")
@@ -144,7 +189,7 @@ print(f"Среднее Z_b1: {df['Z_b1'].mean():.2e}")
 
 # Топ-5 лучших решений
 print(f"\nТоп-5 лучших решений по критерию Слухоцкого:")
-top_5 = df_sorted.head(5)
+top_5 = df_sorted.head(10)
 for i, (idx, row) in enumerate(top_5.iterrows(), 1):
     print(f"{i}. Z_b1 = {row['Z_b1']:.2e}, "
           f"Давление = {row['pressure_max_mpa']:.2f} МПа, "
